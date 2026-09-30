@@ -13,7 +13,7 @@ import {
 export function EquityChart({ data }: { data: { t: string; equity: number; drawdown: number }[] }) {
   return (
     <div className="h-64 w-full">
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid stroke="#2a2f36" />
           <XAxis dataKey="t" hide />
@@ -32,7 +32,7 @@ export function DrawdownChart({ data }: { data: { t: string; drawdown: number }[
   const series = data.map((d) => ({ ...d, dd: d.drawdown * 100 }));
   return (
     <div className="h-48 w-full">
-      <ResponsiveContainer>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart data={series}>
           <CartesianGrid stroke="#2a2f36" />
           <XAxis dataKey="t" hide />
