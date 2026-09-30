@@ -1,4 +1,7 @@
-"""Canonical models and the strategy DSL. Grok produces StrategySpec JSON."""
+"""Canonical models and the strategy DSL.
+
+Grok produces StrategySpec JSON. The engine never executes generated Python.
+"""
 
 from __future__ import annotations
 
@@ -90,7 +93,7 @@ class MarketEvent(BaseModel):
     def finite(cls, v: float | None) -> float | None:
         if v is None:
             return v
-        if v != v:
+        if v != v:  # NaN
             raise ValueError("NaN is not allowed")
         return v
 
@@ -125,7 +128,7 @@ class InstrumentRef(BaseModel):
     @model_validator(mode="after")
     def require_identity(self) -> "InstrumentRef":
         if not any([self.symbol, self.market_id, self.ticker, self.category, self.token_id]):
-            raise ValueError("InstrumentRef needs an identity field")
+            raise ValueError("InstrumentRef needs symbol, market_id, ticker, category, or token_id")
         return self
 
     def identity(self) -> str:
@@ -217,6 +220,8 @@ class TimeConstraintSpec(BaseModel):
 
 
 class StrategySpec(BaseModel):
+    """Boundary between Grok and the deterministic engine."""
+
     name: str = "unnamed"
     hypothesis: str = ""
     universe: UniverseSpec
@@ -265,6 +270,14 @@ class TradeRecord(BaseModel):
     fill_ts: datetime
     signal_ts: datetime
     reason: str
+
+
+class PositionSnapshot(BaseModel):
+    market_id: str
+    outcome: Outcome
+    quantity: float
+    avg_price: float
+    unrealized: float = 0.0
 
 
 class EquityPoint(BaseModel):

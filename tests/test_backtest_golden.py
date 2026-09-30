@@ -23,8 +23,10 @@ def test_golden_backtest_is_deterministic(base_spec, events, datasets):
     assert a.analytics.trade_count == b.analytics.trade_count
     assert a.analytics.ending_equity == b.analytics.ending_equity
     assert a.analytics.trade_count >= 1
+    # Bought YES before settlement to $1 with zero fees/slippage → positive PnL
     assert a.analytics.net_pnl > 0
     assert a.analytics.max_drawdown <= 0
+    # Lookahead: first trade cannot precede the BTC jump bar (index 40 → 03:20)
     entries = [t for t in a.trades if t.reason == "entry"]
     assert entries
     assert entries[0].signal_ts.hour >= 3

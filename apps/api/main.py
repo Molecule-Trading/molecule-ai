@@ -87,3 +87,9 @@ def validate(body: StrategyIn):
 def backtest(body: StrategyIn):
     spec = StrategySpec.model_validate(body.spec)
     return service.run_spec(spec)
+
+
+def run() -> None:
+    import uvicorn
+
+    uvicorn.run("apps.api.main:app", host=settings.api_host, port=settings.api_port, reload=True)

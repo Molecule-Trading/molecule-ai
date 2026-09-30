@@ -68,5 +68,12 @@ class GrokClient:
                     args = json.loads(args)
                 except json.JSONDecodeError:
                     args = {}
-            parsed.append({"id": c.get("id"), "name": fn.get("name"), "arguments": args, "raw": c})
+            parsed.append(
+                {
+                    "id": c.get("id"),
+                    "name": fn.get("name"),
+                    "arguments": args,
+                    "raw": c,
+                }
+            )
         return parsed

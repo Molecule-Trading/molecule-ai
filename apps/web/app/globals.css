@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+html,
+body {
+  background: #0b0c0e;
+  color: #e8eaed;
+  min-height: 100%;
+}
+
+body {
+  font-feature-settings: "ss01" 1;
+}
+
+* {
+  border-color: #2a2f36;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2f36;
+}

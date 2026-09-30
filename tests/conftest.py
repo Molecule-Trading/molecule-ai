@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from data.catalog import DataCatalog
@@ -10,6 +12,7 @@ from scripts.build_fixtures import build_and_register
 def catalog(tmp_path_factory):
     root = tmp_path_factory.mktemp("data")
     cat = DataCatalog(root / "data", root / "molecule.duckdb")
+    # write fixtures into repo tests/fixtures then register into temp catalog
     build_and_register(cat)
     return cat
 

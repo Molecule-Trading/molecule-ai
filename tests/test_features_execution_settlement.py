@@ -9,12 +9,29 @@ from engine.settlement.binary import settle_binary
 def test_features_are_causal():
     eng = FeatureEngine(window_bars=2)
     t0 = datetime(2025, 1, 1)
-    a = MarketEvent(timestamp=t0, venue=Venue.BINANCE, market_id="BTCUSDT", event_type=EventType.CANDLE, close=100.0, price=100.0)
-    b = MarketEvent(timestamp=t0 + timedelta(minutes=5), venue=Venue.BINANCE, market_id="BTCUSDT", event_type=EventType.CANDLE, close=101.0, price=101.0)
+    a = MarketEvent(
+        timestamp=t0,
+        venue=Venue.BINANCE,
+        market_id="BTCUSDT",
+        event_type=EventType.CANDLE,
+        close=100.0,
+        price=100.0,
+    )
+    b = MarketEvent(
+        timestamp=t0 + timedelta(minutes=5),
+        venue=Venue.BINANCE,
+        market_id="BTCUSDT",
+        event_type=EventType.CANDLE,
+        close=101.0,
+        price=101.0,
+    )
     eng.on_event(a)
-    assert eng.state.snapshot("BINANCE:BTCUSDT")["return"] is None
+    snap0 = eng.state.snapshot("BINANCE:BTCUSDT")
+    assert snap0["return"] is None
     eng.on_event(b)
-    assert abs(eng.state.snapshot("BINANCE:BTCUSDT")["return"] - 0.01) < 1e-9
+    snap1 = eng.state.snapshot("BINANCE:BTCUSDT")
+    assert snap1["return"] is not None
+    assert abs(snap1["return"] - 0.01) < 1e-9
 
 
 def test_execution_buy_uses_ask_and_slippage():
@@ -33,5 +50,6 @@ def test_settlement_yes_no():
 
 def test_settlement_refuses_inference():
     import pytest
+
     with pytest.raises(ValueError):
         settle_binary(Outcome.YES, Outcome.NA)

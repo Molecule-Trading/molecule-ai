@@ -27,6 +27,7 @@ def evaluate_signal(
         value = src.get("probability_change")
         if value is None:
             return False
+        # fade large moves
         return abs(value) >= spec.threshold
 
     if spec.type == "cross_venue_divergence":

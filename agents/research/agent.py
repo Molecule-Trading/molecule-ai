@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Callable
+from typing import Any, Callable
 
 from agents.grok_client import GrokClient
 from agents.tools.catalog import SYSTEM_PROMPT, TOOLS
@@ -42,8 +42,10 @@ class ResearchAgent:
                 last_text = text
             assistant_msg = (response.get("choices") or [{}])[0].get("message") or {}
             messages.append(assistant_msg if assistant_msg.get("role") else {"role": "assistant", "content": text})
+
             if not calls:
                 break
+
             for call in calls:
                 name = call["name"]
                 args = call["arguments"] or {}
@@ -53,11 +55,22 @@ class ResearchAgent:
                 if name == "create_strategy" and result.get("accepted"):
                     spec = result.get("spec")
                 trace.append({"tool": name, "ok": result.get("ok", True)})
-                messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(_compact(result))})
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call["id"],
+                        "content": json.dumps(_compact(result)),
+                    }
+                )
+
         return {"analysis": last_text, "spec": spec, "trace": trace}
 
 
 def fallback_spec(hypothesis: str) -> StrategySpec:
+    """Deterministic default used when XAI_API_KEY is absent.
+
+    Still a structured spec — never executable model output.
+    """
     return StrategySpec.model_validate(
         {
             "name": "btc_move_pm_reprice",
@@ -67,7 +80,13 @@ def fallback_spec(hypothesis: str) -> StrategySpec:
                 "target": {"venue": "KALSHI", "market_id": "BTC-MOVE-FIXTURE", "ticker": "BTC-MOVE-FIXTURE"},
             },
             "data": {"timeframe": "5m", "require_settlement": True},
-            "signal": {"type": "momentum", "window": "5m", "threshold": 0.01, "source": "reference", "direction": "abs"},
+            "signal": {
+                "type": "momentum",
+                "window": "5m",
+                "threshold": 0.01,
+                "source": "reference",
+                "direction": "abs",
+            },
             "entry": {"action": "BUY", "outcome": "YES"},
             "exit": {"type": "SETTLEMENT"},
             "sizing": {"type": "fixed_notional", "notional": 1000},

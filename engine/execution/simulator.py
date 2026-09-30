@@ -47,6 +47,7 @@ class ExecutionSimulator:
             px = raw + slip
         else:
             px = max(0.0, raw - slip)
+        # Prediction-market prices live in [0, 1]
         if 0 <= intended_price <= 1.0 and px > 1.0:
             px = 1.0
         if 0 <= intended_price <= 1.0 and px < 0.0:

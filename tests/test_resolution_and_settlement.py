@@ -7,41 +7,58 @@ from tests.helpers import candle, quote, settlement, spec_kwargs
 
 
 def _path(winner: str):
-    return [candle(0, 100), candle(1, 102), quote(0, 0.40), quote(1, 0.40), settlement(2, winner)]
+    return [
+        candle(0, 100),
+        candle(1, 102),
+        quote(0, 0.40),
+        quote(1, 0.40),
+        settlement(2, winner),
+    ]
 
 
 def test_yes_long_settles_to_one():
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs())).run(_path("YES"), [])
+    spec = StrategySpec.model_validate(spec_kwargs())
+    r = BacktestEngine(spec).run(_path("YES"), [])
     assert r.analytics.trade_count == 1
-    assert [t for t in r.trades if t.reason == "settlement"][0].price == 1.0
+    settle = [t for t in r.trades if t.reason == "settlement"][0]
+    assert settle.price == 1.0
     assert r.analytics.net_pnl > 0
 
 
 def test_yes_long_loses_when_no_wins():
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs())).run(_path("NO"), [])
-    assert [t for t in r.trades if t.reason == "settlement"][0].price == 0.0
+    spec = StrategySpec.model_validate(spec_kwargs())
+    r = BacktestEngine(spec).run(_path("NO"), [])
+    settle = [t for t in r.trades if t.reason == "settlement"][0]
+    assert settle.price == 0.0
     assert r.analytics.net_pnl < 0
 
 
 def test_no_long_wins_when_no_resolves():
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs(entry={"action": "BUY", "outcome": "NO"}))).run(_path("NO"), [])
-    assert [t for t in r.trades if t.reason == "settlement"][0].price == 1.0
+    spec = StrategySpec.model_validate(spec_kwargs(entry={"action": "BUY", "outcome": "NO"}))
+    r = BacktestEngine(spec).run(_path("NO"), [])
+    settle = [t for t in r.trades if t.reason == "settlement"][0]
+    assert settle.price == 1.0
     assert r.analytics.net_pnl > 0
 
 
 def test_short_yes_profits_when_no_wins():
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs(entry={"action": "SELL", "outcome": "YES"}))).run(_path("NO"), [])
+    spec = StrategySpec.model_validate(spec_kwargs(entry={"action": "SELL", "outcome": "YES"}))
+    r = BacktestEngine(spec).run(_path("NO"), [])
+    assert r.analytics.trade_count == 1
+    # sold YES at ~0.40, settlement payout 0 → keep the premium
     assert r.analytics.net_pnl > 0
 
 
 def test_short_yes_loses_when_yes_wins():
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs(entry={"action": "SELL", "outcome": "YES"}))).run(_path("YES"), [])
+    spec = StrategySpec.model_validate(spec_kwargs(entry={"action": "SELL", "outcome": "YES"}))
+    r = BacktestEngine(spec).run(_path("YES"), [])
     assert r.analytics.net_pnl < 0
 
 
 def test_unresolved_does_not_invent_winner():
     events = [candle(0, 100), candle(1, 102), quote(0, 0.4), quote(1, 0.4)]
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs())).run(events, [])
+    spec = StrategySpec.model_validate(spec_kwargs())
+    r = BacktestEngine(spec).run(events, [])
     assert not any(t.reason == "settlement" for t in r.trades)
     assert any("resolution" in w.lower() or "open" in w.lower() for w in r.warnings)
 
@@ -50,7 +67,8 @@ def test_garbage_resolution_does_not_infer():
     ev = settlement(2, "YES")
     ev.resolution = "MAYBE"
     events = [candle(0, 100), candle(1, 102), quote(0, 0.4), quote(1, 0.4), ev]
-    r = BacktestEngine(StrategySpec.model_validate(spec_kwargs())).run(events, [])
+    spec = StrategySpec.model_validate(spec_kwargs())
+    r = BacktestEngine(spec).run(events, [])
     assert not any(t.reason == "settlement" for t in r.trades)
 
 

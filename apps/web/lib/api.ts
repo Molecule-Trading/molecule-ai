@@ -1,4 +1,9 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+/**
+ * Live desk: set NEXT_PUBLIC_API_URL=http://localhost:8000 (or your API).
+ * Hosted UI with no API uses same-origin /bff, which does not invent engine numbers.
+ */
+const configured = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+const BASE = configured && configured.length > 0 ? configured : "/bff";
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
