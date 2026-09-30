@@ -28,7 +28,7 @@ export function RightRail({
         <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Menu</div>
         <nav className="mt-3 space-y-1">
           {MENU.map((item) => {
-            const on = path === item.href || path.startsWith(item.href + "/");
+            const on = path === item.href || (item.href !== "/research" && path.startsWith(item.href + "/"));
             return (
               <Link
                 key={item.href}
