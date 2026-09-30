@@ -1,9 +1,9 @@
-/** Recorded engine fixture for the hosted UI when FastAPI is not attached. */
+/** Recorded engine sample for the hosted UI when FastAPI is not attached. */
 
 import { fixture } from "./engine-fixture";
 
 const OFFLINE =
-  "This deployment is the research UI. A new hypothesis was not executed. Set NEXT_PUBLIC_API_URL or MOLECULE_API_ORIGIN to your FastAPI origin. The recorded fixture below is engine output on synthetic data, not a live run.";
+  "This deployment is the research UI. A new hypothesis was not executed. Attach an API origin to run the engine. The recorded sample is engine output on synthetic data, not a live run.";
 
 type AnyRec = Record<string, any>;
 
@@ -37,7 +37,7 @@ export function hostedResponse(method: string, path: string, hypothesis?: string
       model: null,
       mode: "ui-only",
       recorded_run_id: recorded.id,
-      note: "Hosted UI. New research is blocked until an API origin is configured. One recorded synthetic fixture is available.",
+      note: "Hosted UI. New research is blocked until an API origin is configured. One recorded synthetic sample is available.",
     };
   }
 
@@ -68,7 +68,7 @@ export function hostedResponse(method: string, path: string, hypothesis?: string
       return {
         ...recorded,
         ai_analysis:
-          "Opened the recorded synthetic fixture for this hypothesis. The engine was not re-run on this request.",
+          "Opened the recorded synthetic sample for this hypothesis. The engine was not re-run on this request.",
       };
     }
     return {
