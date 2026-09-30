@@ -7,11 +7,11 @@ export const metadata: Metadata = {
   icons: { icon: "/icon.svg" },
 };
 
-const themeBoot = `(function(){try{var t=localStorage.getItem("molecule.theme")||"system";var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.add(d?"dark":"light");r.dataset.theme=t;}catch(e){}})();`;
+const themeBoot = `(function(){try{var t=localStorage.getItem("molecule.theme")||"system";var d=t==="dark"||(t!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches);var r=document.documentElement;r.classList.toggle("dark",d);r.classList.toggle("light",!d);r.dataset.theme=t;}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
