@@ -8,15 +8,15 @@ NO_PAYOUT = 0.0
 
 
 def settle_binary(outcome_held: Outcome, resolved_winner: Outcome) -> float:
-    """Binary contract settlement: winning outcome pays $1, loser $0.
-
-    Never infers a winner. Caller must pass a known historical resolution.
-    """
     if resolved_winner not in (Outcome.YES, Outcome.NO):
         raise ValueError("Resolution is unavailable; refusing to infer settlement")
     if outcome_held == resolved_winner:
         return YES_PAYOUT
     return NO_PAYOUT
+
+
+def settlement_cash(quantity: float, outcome_held: Outcome, resolved_winner: Outcome) -> float:
+    return settle_binary(outcome_held, resolved_winner) * quantity
 
 
 def implied_no(yes_price: float) -> float:
