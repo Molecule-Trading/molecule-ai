@@ -4,19 +4,38 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+html.light {
+  color-scheme: light;
+  --bg: #f4f2ee;
+  --bg-2: #fffcf8;
+  --bg-3: #ebe7e1;
+  --bg-4: #e2ddd6;
+  --line: #ddd6cc;
+  --mute: #6f6a64;
+  --fg: #161412;
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg: #0b0c0e;
+  --bg-2: #121417;
+  --bg-3: #1a1d22;
+  --bg-4: #262b33;
+  --line: #2a2f36;
+  --mute: #8b939e;
+  --fg: #e8eaed;
+}
+
 html,
 body {
-  background: #0b0c0e;
-  color: #e8eaed;
+  background: var(--bg);
+  color: var(--fg);
   min-height: 100%;
 }
 
 body {
   font-feature-settings: "ss01" 1;
-}
-
-* {
-  border-color: #2a2f36;
 }
 
 button,
@@ -29,5 +48,5 @@ button,
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2f36;
+  background: var(--line);
 }

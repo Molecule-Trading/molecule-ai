@@ -1,19 +1,20 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
         ink: {
-          950: "#0b0c0e",
-          900: "#121417",
-          800: "#1a1d22",
-          700: "#262b33",
+          950: "var(--bg)",
+          900: "var(--bg-2)",
+          800: "var(--bg-3)",
+          700: "var(--bg-4)",
         },
-        line: "#2a2f36",
-        mute: "#8b939e",
-        text: "#e8eaed",
+        line: "var(--line)",
+        mute: "var(--mute)",
+        text: "var(--fg)",
         accent: "#c9a227",
       },
       fontFamily: {

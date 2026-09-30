@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Wordmark } from "@/components/Wordmark";
 
 const LINKS = [
@@ -10,17 +11,13 @@ const LINKS = [
   { href: "/settings", label: "Settings" },
 ];
 
-export function AppChrome({
-  right,
-}: {
-  right?: React.ReactNode;
-}) {
+export function AppChrome({ right }: { right?: React.ReactNode }) {
   const path = usePathname();
   return (
-    <header className="flex items-center justify-between border-b border-line px-4 py-3 md:px-5">
+    <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
       <Wordmark />
-      <div className="flex items-center gap-3">
-        <nav className="hidden items-center gap-5 text-sm text-mute sm:flex">
+      <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
+        <nav className="flex items-center gap-4 text-sm text-mute">
           {LINKS.map((l) => {
             const on = path === l.href || path.startsWith(l.href + "/");
             return (
@@ -31,7 +28,8 @@ export function AppChrome({
           })}
         </nav>
         {right}
+        <ThemeToggle />
       </div>
-    </header>
+    </div>
   );
 }

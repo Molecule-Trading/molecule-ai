@@ -40,28 +40,16 @@ export default function RunsPage() {
         }
       />
 
-      <div className="mx-auto max-w-6xl px-5 py-8">
+      <div className="mx-auto max-w-6xl px-5 pb-10">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Strategies</div>
             <h1 className="mt-1 font-serif text-4xl font-medium tracking-tight">Your strategies</h1>
             <p className="mt-2 text-sm text-mute">{running} running</p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setTab("deployed")}
-              className="rounded-full border border-line px-4 py-2 text-sm text-mute hover:text-text"
-            >
-              Portfolio
-            </button>
-            <Link
-              href="/research"
-              className="rounded-full bg-text px-4 py-2 text-sm font-medium text-ink-950"
-            >
-              + New strategy
-            </Link>
-          </div>
+          <Link href="/research" className="rounded-full bg-text px-4 py-2 text-sm font-medium text-ink-950">
+            + New strategy
+          </Link>
         </div>
 
         <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
