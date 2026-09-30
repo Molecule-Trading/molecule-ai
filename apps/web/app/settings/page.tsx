@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { AppChrome } from "@/components/AppChrome";
@@ -101,13 +100,7 @@ function SettingsInner() {
 
   return (
     <div className="min-h-screen">
-      <AppChrome
-        right={
-          <Link href="/runs" className="text-sm text-mute hover:text-text">
-            ← Strategies
-          </Link>
-        }
-      />
+      <AppChrome />
 
       <div className="mx-auto flex max-w-5xl flex-col md:flex-row">
         <aside className="w-full border-b border-line md:w-64 md:border-b-0 md:border-r">
@@ -205,7 +198,9 @@ function SettingsInner() {
               </p>
               <div className="mt-6 space-y-2">
                 {brokers.length === 0 && (
-                  <div className="rounded-2xl border border-line px-4 py-6 text-sm text-mute">No brokerages linked.</div>
+                  <div className="rounded-2xl border border-line px-4 py-6 text-sm text-mute">
+                    No brokerages linked.
+                  </div>
                 )}
                 {brokers.map((b) => (
                   <div
@@ -274,7 +269,8 @@ function SettingsInner() {
             <section className="max-w-xl">
               <h1 className="font-serif text-4xl font-medium">Security</h1>
               <p className="mt-2 text-sm text-mute">
-                This hosted desk stores profile and chats in local storage. API keys never enter the browser.
+                This hosted desk stores profile and chats in local storage. API keys never enter the
+                browser.
               </p>
               <div className="mt-6 rounded-2xl border border-line bg-ink-900 p-5 text-sm text-mute">
                 Engine {health?.engine_version || "—"} · {health?.mode === "ui-only" ? "UI only" : "API attached"}
