@@ -74,7 +74,7 @@ Fixture datasets under `tests/fixtures/` are labelled synthetic. The UI and API 
 
 `apps/web` is the Vercel project. Set the project **Root Directory** to `apps/web`.
 
-With no API configured, the desk still loads. It shows one **recorded synthetic fixture** produced by the Python engine (`make web-fixture` → `apps/web/lib/engine-fixture.json`). Those numbers are not invented and are not a live run of the page. Submitting a different hypothesis is blocked until an API is attached. The page does not fill in P&L for a hypothesis the engine did not run.
+With no API configured, the desk still loads. It shows one **recorded synthetic fixture** produced by the Python engine (`make web-fixture` → `apps/web/lib/engine-fixture.ts`). Those numbers are not invented and are not a live run of the page. Submitting a different hypothesis is blocked until an API is attached. The page does not fill in P&L for a hypothesis the engine did not run.
 
 ```bash
 make web-fixture

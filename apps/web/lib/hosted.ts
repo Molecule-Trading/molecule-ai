@@ -1,6 +1,6 @@
 /** Recorded engine fixture for the hosted UI when FastAPI is not attached. */
 
-import fixture from "./engine-fixture.json";
+import { fixture } from "./engine-fixture";
 
 const OFFLINE =
   "This deployment is the research UI. A new hypothesis was not executed. Set NEXT_PUBLIC_API_URL or MOLECULE_API_ORIGIN to your FastAPI origin. The recorded fixture below is engine output on synthetic data, not a live run.";
