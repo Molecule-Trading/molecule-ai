@@ -72,13 +72,20 @@ export default function MarketsPage() {
               </tr>
             </thead>
             <tbody>
+              {datasets.length === 0 && (
+                <tr>
+                  <td className="px-3 py-6 text-mute" colSpan={6}>
+                    No datasets in the catalog.
+                  </td>
+                </tr>
+              )}
               {datasets.map((d) => (
                 <tr key={d.dataset_id} className="border-t border-line font-mono text-xs">
                   <td className="px-3 py-2">{d.venue}</td>
                   <td className="px-3 py-2">{d.instrument}</td>
                   <td className="px-3 py-2">{d.period}</td>
                   <td className="px-3 py-2">{d.rows}</td>
-                  <td className="px-3 py-2">{d.data_quality?.status}</td>
+                  <td className="px-3 py-2">{d.data_quality?.status || d.quality || "—"}</td>
                   <td className="px-3 py-2">{d.synthetic ? "yes" : "no"}</td>
                 </tr>
               ))}
@@ -90,6 +97,7 @@ export default function MarketsPage() {
       <section>
         <h2 className="mb-2 font-mono text-xs uppercase tracking-wider text-mute">Market list</h2>
         <div className="divide-y divide-line border border-line">
+          {markets.length === 0 && <div className="px-4 py-6 text-sm text-mute">No markets match.</div>}
           {markets.map((m, i) => (
             <div key={i} className="px-4 py-3 text-sm">
               <div className="flex justify-between gap-4">
@@ -98,7 +106,7 @@ export default function MarketsPage() {
                   <div>{m.symbol || m.ticker || m.market_id || m.question || m.title}</div>
                 </div>
                 <div className="font-mono text-xs text-mute">
-                  {m.rows ? `${m.rows} rows` : ""} {m.quality || ""}
+                  {m.rows ? `${m.rows} rows` : ""} {m.quality || (m.synthetic ? "synthetic" : "")}
                 </div>
               </div>
             </div>

@@ -29,7 +29,7 @@ async function handle(req: NextRequest, path: string[]) {
       hypothesis = undefined;
     }
   }
-  return NextResponse.json(hostedResponse(req.method, rel, hypothesis));
+  return NextResponse.json(hostedResponse(req.method, rel + req.nextUrl.search, hypothesis));
 }
 
 export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {

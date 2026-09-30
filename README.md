@@ -72,14 +72,20 @@ Fixture datasets under `tests/fixtures/` are labelled synthetic. The UI and API 
 
 ## Hosted UI
 
-`apps/web` is the Vercel project root. With no API configured, the desk and a labelled sample catalog still load. The page does not run the engine and does not fill in P&L.
+`apps/web` is the Vercel project. Set the project **Root Directory** to `apps/web`.
+
+With no API configured, the desk still loads. It shows one **recorded synthetic fixture** produced by the Python engine (`make web-fixture` → `apps/web/lib/engine-fixture.json`). Those numbers are not invented and are not a live run of the page. Submitting a different hypothesis is blocked until an API is attached. The page does not fill in P&L for a hypothesis the engine did not run.
 
 ```bash
-# attach a real API
+make web-fixture
+
+# browser talks to FastAPI directly
 NEXT_PUBLIC_API_URL=https://your-api-origin
-# or proxy from the Next server only
+# or the Next server proxies, and the key stays off the browser
 MOLECULE_API_ORIGIN=https://your-api-origin
 ```
+
+Set `WEB_ORIGIN` on the API to the Vercel origin (comma-separated if you have more than one). Use `WEB_ORIGIN=*` only if any browser origin is acceptable.
 
 Local against the API:
 

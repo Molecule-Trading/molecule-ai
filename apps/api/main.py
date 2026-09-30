@@ -14,10 +14,21 @@ settings = get_settings()
 service = ResearchService(settings)
 
 app = FastAPI(title="Molecule AI", version=ENGINE_VERSION)
+def _cors_origins() -> list[str]:
+    raw = [o.strip() for o in settings.web_origin.split(",") if o.strip()]
+    if "*" in raw:
+        return ["*"]
+    for extra in ("http://localhost:3000", "http://127.0.0.1:3000"):
+        if extra not in raw:
+            raw.append(extra)
+    return raw or ["http://localhost:3000"]
+
+
+_origins = _cors_origins()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.web_origin, "http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_credentials=True,
+    allow_origins=_origins,
+    allow_credentials="*" not in _origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,119 +1,107 @@
-/** Static catalog + one sample record for the hosted UI when FastAPI is not attached. */
+/** Recorded engine fixture for the hosted UI when FastAPI is not attached. */
+
+import fixture from "./engine-fixture.json";
 
 const OFFLINE =
-  "This deployment is the research UI only. The Python engine did not run. Set NEXT_PUBLIC_API_URL (browser) or MOLECULE_API_ORIGIN (server proxy) to your FastAPI origin.";
+  "This deployment is the research UI. A new hypothesis was not executed. Set NEXT_PUBLIC_API_URL or MOLECULE_API_ORIGIN to your FastAPI origin. The recorded fixture below is engine output on synthetic data, not a live run.";
 
-const SAMPLE_ID = "fixture-btc-pm";
+type AnyRec = Record<string, any>;
 
-const stages = [
-  { key: "interpret", label: "Interpret", status: "done" },
-  { key: "discover", label: "Discover data", status: "done" },
-  { key: "specify", label: "Specify", status: "done" },
-  { key: "validate", label: "Validate", status: "done" },
-  { key: "backtest", label: "Backtest", status: "done" },
-  { key: "analyze", label: "Analyze", status: "done" },
-];
+const recorded = fixture.run as AnyRec;
+const markets = fixture.markets as AnyRec[];
+const datasets = fixture.datasets as AnyRec[];
 
-export const sampleRun = {
-  id: SAMPLE_ID,
-  hypothesis:
-    "Test whether a 1% BTC move over 5 minutes predicts a delayed move in BTC-related prediction markets.",
-  status: "COMPLETED",
-  stage: "analyze",
-  stages,
-  started_at: "2026-01-15T03:20:00Z",
-  completed_at: "2026-01-15T03:20:01Z",
-  runtime: 0.4,
-  engine_version: "0.1.0",
-  data_period: "2026-01-15 synthetic session",
-  data_sources: ["BINANCE BTCUSDT", "KALSHI BTC-MOVE-FIXTURE"],
-  dataset_versions: [
-    { dataset_id: "binance-btcusdt-fixture", synthetic: true, data_version: "fixture" },
-    { dataset_id: "kalshi-btc-move-fixture", synthetic: true, data_version: "fixture" },
-  ],
-  strategy_spec: {
-    name: "btc_move_pm_reprice",
-    universe: {
-      reference: { venue: "BINANCE", symbol: "BTCUSDT" },
-      target: { venue: "KALSHI", market_id: "BTC-MOVE-FIXTURE" },
-    },
-    signal: { type: "momentum", window: "5m", threshold: 0.01, source: "reference" },
-    entry: { action: "BUY", outcome: "YES" },
-    exit: { type: "SETTLEMENT" },
-    execution: { latency_ms: 100, slippage: "none", fee_bps: 0 },
-  },
-  ai_analysis:
-    "Sample record shipped with the UI. It is not a live backtest of this page load. Attach the API to execute the engine.",
-  error: null,
-  results: {
-    hosted_preview: true,
-    analytics: null,
-    equity: [],
-    trades: [],
-    assumptions: {
-      note: "Numbers are omitted on purpose. The hosted frontend does not execute the engine.",
-      engine_version: "0.1.0",
-    },
-    data_quality: {
-      synthetic: true,
-      warnings: [OFFLINE],
-    },
-    dataset_versions: [
-      { dataset_id: "binance-btcusdt-fixture", synthetic: true },
-      { dataset_id: "kalshi-btc-move-fixture", synthetic: true },
-    ],
-  },
-};
+export const sampleRun = recorded;
 
-const markets = [
-  { venue: "BINANCE", market_id: "BTCUSDT", ticker: "BTCUSDT", title: "BTCUSDT", source: "fixture", synthetic: true },
-  { venue: "KALSHI", market_id: "BTC-MOVE-FIXTURE", ticker: "BTC-MOVE-FIXTURE", title: "BTC move fixture", source: "catalog", synthetic: true },
-  { venue: "POLYMARKET", market_id: "POLY-BTC-FIXTURE", question: "Polymarket BTC fixture", source: "catalog", synthetic: true },
-];
+const BLOCKED_STAGES = (recorded.stages as AnyRec[]).map((s) => {
+  if (s.key === "RUNNING_BACKTEST" || s.key === "CALCULATING_ANALYTICS" || s.key === "INTERPRETING") {
+    return { ...s, status: "blocked" };
+  }
+  return { ...s, status: "done" };
+});
 
-const datasets = [
-  { dataset_id: "binance-btcusdt-fixture", venue: "BINANCE", instrument: "BTCUSDT", period: "fixture", rows: "synthetic", quality: "ok", synthetic: true },
-  { dataset_id: "kalshi-btc-move-fixture", venue: "KALSHI", instrument: "BTC-MOVE-FIXTURE", period: "fixture", rows: "synthetic", quality: "ok", synthetic: true },
-  { dataset_id: "polymarket-btc-fixture", venue: "POLYMARKET", instrument: "POLY-BTC-FIXTURE", period: "fixture", rows: "synthetic", quality: "ok", synthetic: true },
-];
+function sameHypothesis(value: string | undefined) {
+  if (!value) return false;
+  return value.trim().toLowerCase() === String(fixture.hypothesis).trim().toLowerCase();
+}
 
 export function hostedResponse(method: string, path: string, hypothesis?: string) {
-  const clean = path.split("?")[0];
+  const [clean, qs = ""] = path.split("?");
+  const params = new URLSearchParams(qs);
+
   if (clean === "/health") {
     return {
       ok: true,
-      engine_version: "0.1.0",
+      engine_version: recorded.engine_version,
       grok: false,
       model: null,
       mode: "ui-only",
-      note: OFFLINE,
+      recorded_run_id: recorded.id,
+      note: "Hosted UI. New research is blocked until an API origin is configured. One recorded synthetic fixture is available.",
     };
   }
-  if (clean === "/markets") return { markets };
-  if (clean === "/datasets") return { datasets };
-  if (clean === "/runs") return { runs: [sampleRun] };
-  if (clean === `/runs/${SAMPLE_ID}`) return sampleRun;
+
+  if (clean === "/markets") {
+    const venue = (params.get("venue") || "").toUpperCase();
+    const q = (params.get("q") || "").toLowerCase();
+    const filtered = markets.filter((m) => {
+      if (venue && String(m.venue).toUpperCase() !== venue) return false;
+      if (!q) return true;
+      const blob = `${m.symbol || ""} ${m.ticker || ""} ${m.market_id || ""} ${m.question || ""} ${m.title || ""}`.toLowerCase();
+      return blob.includes(q);
+    });
+    return { markets: filtered };
+  }
+
+  if (clean === "/datasets") {
+    const venue = (params.get("venue") || "").toUpperCase();
+    const filtered = datasets.filter((d) => !venue || String(d.venue).toUpperCase() === venue);
+    return { datasets: filtered };
+  }
+
+  if (clean === "/runs") return { runs: [recorded] };
+  if (clean === `/runs/${recorded.id}`) return recorded;
+
   if (method === "POST" && clean === "/research") {
+    const text = hypothesis?.trim() || String(recorded.hypothesis);
+    if (sameHypothesis(text)) {
+      return {
+        ...recorded,
+        ai_analysis:
+          "Opened the recorded synthetic fixture for this hypothesis. The engine was not re-run on this request.",
+      };
+    }
     return {
-      ...sampleRun,
       id: "engine-offline",
-      hypothesis: hypothesis || sampleRun.hypothesis,
+      hypothesis: text,
       status: "BLOCKED",
-      stage: "backtest",
-      stages: stages.map((s) =>
-        s.key === "backtest" || s.key === "analyze" ? { ...s, status: "blocked" } : s
-      ),
-      error: OFFLINE,
+      stage: "RUNNING_BACKTEST",
+      stages: BLOCKED_STAGES,
+      started_at: new Date().toISOString(),
+      completed_at: null,
+      runtime: null,
+      engine_version: recorded.engine_version,
+      strategy_spec: null,
       ai_analysis: OFFLINE,
+      error: OFFLINE,
+      recorded_run_id: recorded.id,
+      synthetic: true,
       results: {
         hosted_preview: true,
         analytics: null,
         equity: [],
         trades: [],
-        assumptions: {},
+        assumptions: {
+          note: "No P&L. This hypothesis was not run by the engine.",
+        },
         data_quality: { synthetic: true, warnings: [OFFLINE] },
       },
     };
   }
+
+  if (clean === "/runs/engine-offline") {
+    return hostedResponse("POST", "/research", hypothesis);
+  }
+
   return { error: `No hosted handler for ${method} ${clean}`, note: OFFLINE };
 }

@@ -1,7 +1,7 @@
 PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
 
-.PHONY: dev api web test lint typecheck ingest backtest fixtures install
+.PHONY: dev api web test lint typecheck ingest backtest fixtures install web-fixture
 
 install:
 	$(PIP) install -e ".[dev]"
@@ -9,6 +9,9 @@ install:
 
 fixtures:
 	$(PYTHON) -m scripts.build_fixtures
+
+web-fixture:
+	$(PYTHON) -m scripts.export_web_fixture
 
 ingest: fixtures
 	@echo "Fixture datasets registered under var/data"

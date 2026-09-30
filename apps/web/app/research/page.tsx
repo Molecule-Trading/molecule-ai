@@ -14,10 +14,15 @@ export default function ResearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<Run[]>([]);
 
+  const [mode, setMode] = useState<string | null>(null);
+
   useEffect(() => {
     api<{ runs: Run[] }>("/runs")
       .then((r) => setRecent(r.runs.slice(0, 6)))
       .catch(() => setRecent([]));
+    api<{ mode?: string }>("/health")
+      .then((h) => setMode(h.mode || "api"))
+      .catch(() => setMode(null));
   }, []);
 
   async function submit() {
@@ -45,6 +50,12 @@ export default function ResearchPage() {
           State a testable hypothesis. Grok drafts a structured strategy. The Python engine
           backtests it. Numbers never come from the model.
         </p>
+        {mode === "ui-only" && (
+          <p className="mt-3 max-w-2xl text-xs text-mute">
+            No API is attached. The example opens a recorded synthetic fixture from the engine.
+            A different hypothesis is blocked. This desk will not invent P&L.
+          </p>
+        )}
       </div>
 
       <div className="border border-line bg-ink-900 p-4">

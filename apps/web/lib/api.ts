@@ -39,4 +39,7 @@ export type Run = {
   dataset_versions?: any[];
   data_period?: string | null;
   data_sources?: string[];
+  recorded_run_id?: string | null;
+  synthetic?: boolean;
+  recorded_fixture?: boolean;
 };

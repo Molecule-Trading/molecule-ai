@@ -34,7 +34,10 @@ export default function RunsPage() {
                     {r.hypothesis}
                   </Link>
                 </td>
-                <td className="px-3 py-2 font-mono text-xs">{r.status}</td>
+                <td className="px-3 py-2 font-mono text-xs">
+                  {r.status}
+                  {r.synthetic || r.recorded_fixture ? " · synthetic" : ""}
+                </td>
                 <td className="px-3 py-2 font-mono text-xs">
                   {fmt(r.results?.analytics?.sharpe)}
                 </td>

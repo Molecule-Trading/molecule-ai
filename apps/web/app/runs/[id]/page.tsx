@@ -33,7 +33,21 @@ export default function RunDetailPage() {
         <h1 className="mt-1 text-xl font-medium">{run.hypothesis}</h1>
         <div className="mt-2 font-mono text-xs text-mute">
           {run.status} · engine {run.engine_version || "—"} · {run.data_period || "—"}
+          {run.synthetic || run.recorded_fixture ? " · synthetic fixture" : ""}
         </div>
+        {(run.recorded_fixture || run.results?.recorded_fixture) && (
+          <p className="mt-3 max-w-2xl text-sm text-mute">
+            Recorded by the Python engine on the shipped synthetic fixtures. This page load did not
+            re-run the backtest and did not ask a model for the numbers.
+          </p>
+        )}
+        {run.status === "BLOCKED" && run.recorded_run_id && (
+          <p className="mt-3 text-sm">
+            <a className="underline" href={`/runs/${run.recorded_run_id}`}>
+              Open the recorded fixture
+            </a>
+          </p>
+        )}
       </div>
 
       <section className="grid gap-8 md:grid-cols-[220px_1fr]">
@@ -46,13 +60,15 @@ export default function RunDetailPage() {
           <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">
             Backtest results
           </h2>
-          <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-6">
+          <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
             <Stat label="Net P&L" value={n(a.net_pnl)} />
             <Stat label="Return" value={pct(a.total_return)} />
             <Stat label="Sharpe" value={n(a.sharpe)} />
+            <Stat label="Sortino" value={n(a.sortino)} />
             <Stat label="Max DD" value={pct(a.max_drawdown)} />
-            <Stat label="Trades" value={String(a.trade_count)} />
             <Stat label="Win rate" value={pct(a.win_rate)} />
+            <Stat label="Trades" value={String(a.trade_count)} />
+            <Stat label="End equity" value={n(a.ending_equity)} />
           </div>
         </section>
       )}
@@ -86,6 +102,13 @@ export default function RunDetailPage() {
               </tr>
             </thead>
             <tbody>
+              {trades.length === 0 && (
+                <tr>
+                  <td className="px-3 py-6 text-mute" colSpan={7}>
+                    No fills. A blocked run has no engine trades.
+                  </td>
+                </tr>
+              )}
               {trades.map((t: any) => (
                 <tr key={t.trade_id} className="border-t border-line font-mono">
                   <td className="px-3 py-2">{t.trade_id}</td>

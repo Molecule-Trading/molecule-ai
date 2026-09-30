@@ -1,0 +1,90 @@
+"""Export one engine-backed fixture run for the hosted UI.
+
+Numbers come from BacktestEngine. The web app labels the file as a recorded
+synthetic fixture, not a live execution.
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from agents.research.agent import fallback_spec
+from apps.api.service import ResearchService
+from apps.api.settings import Settings
+
+HYPOTHESIS = (
+    "Test whether a 1% BTC move over 5 minutes predicts a delayed move "
+    "in BTC-related prediction markets."
+)
+RUN_ID = "fixture-btc-pm"
+OUT = Path(__file__).resolve().parents[1] / "apps" / "web" / "lib" / "engine-fixture.json"
+
+
+def main() -> None:
+    settings = Settings()
+    service = ResearchService(settings)
+    spec = fallback_spec(HYPOTHESIS)
+    ran = service.run_spec(spec)
+    if not ran.get("valid"):
+        raise SystemExit(f"fixture backtest invalid: {ran}")
+
+    results = ran["results"]
+    results["recorded_fixture"] = True
+    results["synthetic"] = True
+    now = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    stages = [
+        {"key": "UNDERSTANDING", "label": "Understanding hypothesis", "status": "done"},
+        {"key": "SELECTING_MARKETS", "label": "Selecting markets", "status": "done"},
+        {"key": "VALIDATING_DATA", "label": "Validating data", "status": "done"},
+        {"key": "BUILDING_STRATEGY", "label": "Building strategy", "status": "done"},
+        {"key": "RUNNING_BACKTEST", "label": "Running backtest", "status": "done"},
+        {"key": "CALCULATING_ANALYTICS", "label": "Calculating analytics", "status": "done"},
+        {"key": "INTERPRETING", "label": "Interpreting results", "status": "done"},
+    ]
+    run = {
+        "id": RUN_ID,
+        "hypothesis": HYPOTHESIS,
+        "strategy_spec": spec.model_dump(mode="json"),
+        "data_sources": [d["dataset_id"] for d in results.get("dataset_versions") or []],
+        "data_period": None,
+        "dataset_versions": results.get("dataset_versions") or [],
+        "engine_version": results.get("engine_version"),
+        "status": "COMPLETED",
+        "stage": "INTERPRETING",
+        "stages": stages,
+        "started_at": now,
+        "completed_at": now,
+        "results": results,
+        "ai_analysis": (
+            "Recorded by the Python engine against the synthetic fixtures shipped in tests/fixtures. "
+            "This page did not call Grok and did not re-run the engine. "
+            "Attach the API to execute a new hypothesis."
+        ),
+        "runtime": None,
+        "error": None,
+        "validation": ran.get("validation"),
+        "synthetic": True,
+        "recorded_fixture": True,
+    }
+    datasets = service.datasets()
+    periods = list(dict.fromkeys(d.get("period") for d in datasets if d.get("period")))
+    run["data_period"] = " · ".join(periods) if periods else "synthetic fixture"
+    payload = {
+        "generated_by": "scripts/export_web_fixture.py",
+        "hypothesis": HYPOTHESIS,
+        "run": run,
+        "markets": service.list_markets(),
+        "datasets": datasets,
+    }
+    OUT.write_text(json.dumps(payload, indent=2, default=str) + "\n")
+    analytics = results.get("analytics") or {}
+    print(
+        f"wrote {OUT} trades={analytics.get('trade_count')} "
+        f"net_pnl={analytics.get('net_pnl')} sharpe={analytics.get('sharpe')}"
+    )
+
+
+if __name__ == "__main__":
+    main()

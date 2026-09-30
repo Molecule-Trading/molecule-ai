@@ -1,0 +1,1299 @@
+{
+  "generated_by": "scripts/export_web_fixture.py",
+  "hypothesis": "Test whether a 1% BTC move over 5 minutes predicts a delayed move in BTC-related prediction markets.",
+  "run": {
+    "id": "fixture-btc-pm",
+    "hypothesis": "Test whether a 1% BTC move over 5 minutes predicts a delayed move in BTC-related prediction markets.",
+    "strategy_spec": {
+      "name": "btc_move_pm_reprice",
+      "hypothesis": "Test whether a 1% BTC move over 5 minutes predicts a delayed move in BTC-related prediction markets.",
+      "universe": {
+        "reference": {
+          "venue": "BINANCE",
+          "symbol": "BTCUSDT",
+          "market_id": null,
+          "ticker": null,
+          "category": null,
+          "outcome": null,
+          "token_id": null
+        },
+        "target": {
+          "venue": "KALSHI",
+          "symbol": null,
+          "market_id": "BTC-MOVE-FIXTURE",
+          "ticker": "BTC-MOVE-FIXTURE",
+          "category": null,
+          "outcome": null,
+          "token_id": null
+        },
+        "filters": {}
+      },
+      "data": {
+        "start": null,
+        "end": null,
+        "timeframe": "5m",
+        "require_quotes": false,
+        "require_trades": false,
+        "require_settlement": true
+      },
+      "features": [],
+      "signal": {
+        "type": "momentum",
+        "window": "5m",
+        "threshold": 0.01,
+        "lookback_bars": 1,
+        "source": "reference",
+        "compare": null,
+        "direction": "abs",
+        "lag_bars": 0
+      },
+      "entry": {
+        "action": "BUY",
+        "outcome": "YES",
+        "on": "signal"
+      },
+      "exit": {
+        "type": "SETTLEMENT",
+        "after": null,
+        "stop_pct": null
+      },
+      "sizing": {
+        "type": "fixed_notional",
+        "notional": 1000.0,
+        "contracts": 100.0,
+        "percent": 0.1,
+        "max_position": null
+      },
+      "risk": {
+        "max_drawdown_pct": null,
+        "max_trades": null,
+        "one_position": true
+      },
+      "execution": {
+        "model": "market",
+        "latency_ms": 100,
+        "slippage": "conservative",
+        "fee_bps": 10.0
+      },
+      "capital": {
+        "initial": 100000.0,
+        "currency": "USD"
+      },
+      "time": {
+        "trading_start": null,
+        "trading_end": null,
+        "exclude_after_expiry": true
+      },
+      "notes": ""
+    },
+    "data_sources": [
+      "binance_BTCUSDT_5m_a473a612ca201f61",
+      "kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5"
+    ],
+    "data_period": "2025-01-01/2025-01-01",
+    "dataset_versions": [
+      {
+        "dataset_id": "binance_BTCUSDT_5m_a473a612ca201f61",
+        "data_version": "fixture-0.1",
+        "checksum": "a473a612ca201f61",
+        "synthetic": true
+      },
+      {
+        "dataset_id": "kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5",
+        "data_version": "fixture-0.1",
+        "checksum": "202e245d4cfee7c5",
+        "synthetic": true
+      }
+    ],
+    "engine_version": "0.1.0",
+    "status": "COMPLETED",
+    "stage": "INTERPRETING",
+    "stages": [
+      {
+        "key": "UNDERSTANDING",
+        "label": "Understanding hypothesis",
+        "status": "done"
+      },
+      {
+        "key": "SELECTING_MARKETS",
+        "label": "Selecting markets",
+        "status": "done"
+      },
+      {
+        "key": "VALIDATING_DATA",
+        "label": "Validating data",
+        "status": "done"
+      },
+      {
+        "key": "BUILDING_STRATEGY",
+        "label": "Building strategy",
+        "status": "done"
+      },
+      {
+        "key": "RUNNING_BACKTEST",
+        "label": "Running backtest",
+        "status": "done"
+      },
+      {
+        "key": "CALCULATING_ANALYTICS",
+        "label": "Calculating analytics",
+        "status": "done"
+      },
+      {
+        "key": "INTERPRETING",
+        "label": "Interpreting results",
+        "status": "done"
+      }
+    ],
+    "started_at": "2026-09-30T17:25:26Z",
+    "completed_at": "2026-09-30T17:25:26Z",
+    "results": {
+      "analytics": {
+        "total_return": 0.010599463854166678,
+        "net_pnl": 1059.946385416668,
+        "sharpe": 0.5948386853829168,
+        "sortino": null,
+        "max_drawdown": -0.010457515312499943,
+        "volatility": 0.0016427196399768837,
+        "win_rate": 1.0,
+        "profit_factor": null,
+        "trade_count": 1,
+        "average_trade": 1059.946385416667,
+        "turnover": 3105.697916666667,
+        "initial_capital": 100000.0,
+        "ending_equity": 101059.94638541667
+      },
+      "equity": [
+        {
+          "t": "2025-01-01T00:00:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:05:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:10:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:15:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:20:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:25:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:30:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:35:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:40:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:45:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:50:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T00:55:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:00:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:05:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:10:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:15:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:20:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:25:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:30:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:35:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:40:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:45:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:50:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T01:55:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:00:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:05:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:10:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:15:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:20:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:25:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:30:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:35:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:40:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:45:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:50:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T02:55:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:00:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:05:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:10:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:15:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:20:00",
+          "equity": 100000.0,
+          "cash": 100000.0,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        },
+        {
+          "t": "2025-01-01T03:25:00",
+          "equity": 98954.248469,
+          "cash": 98976.613052,
+          "unrealized": -22.364583,
+          "drawdown": -0.01045752
+        },
+        {
+          "t": "2025-01-01T03:30:00",
+          "equity": 99350.081802,
+          "cash": 98976.613052,
+          "unrealized": 373.46875,
+          "drawdown": -0.00649918
+        },
+        {
+          "t": "2025-01-01T03:35:00",
+          "equity": 99354.248469,
+          "cash": 98976.613052,
+          "unrealized": 377.635417,
+          "drawdown": -0.00645752
+        },
+        {
+          "t": "2025-01-01T03:40:00",
+          "equity": 99358.415135,
+          "cash": 98976.613052,
+          "unrealized": 381.802083,
+          "drawdown": -0.00641585
+        },
+        {
+          "t": "2025-01-01T03:45:00",
+          "equity": 99362.581802,
+          "cash": 98976.613052,
+          "unrealized": 385.96875,
+          "drawdown": -0.00637418
+        },
+        {
+          "t": "2025-01-01T03:50:00",
+          "equity": 99366.748469,
+          "cash": 98976.613052,
+          "unrealized": 390.135417,
+          "drawdown": -0.00633252
+        },
+        {
+          "t": "2025-01-01T03:55:00",
+          "equity": 99370.915135,
+          "cash": 98976.613052,
+          "unrealized": 394.302083,
+          "drawdown": -0.00629085
+        },
+        {
+          "t": "2025-01-01T04:00:00",
+          "equity": 99375.081802,
+          "cash": 98976.613052,
+          "unrealized": 398.46875,
+          "drawdown": -0.00624918
+        },
+        {
+          "t": "2025-01-01T04:05:00",
+          "equity": 99379.248469,
+          "cash": 98976.613052,
+          "unrealized": 402.635417,
+          "drawdown": -0.00620752
+        },
+        {
+          "t": "2025-01-01T04:10:00",
+          "equity": 99383.415135,
+          "cash": 98976.613052,
+          "unrealized": 406.802083,
+          "drawdown": -0.00616585
+        },
+        {
+          "t": "2025-01-01T04:15:00",
+          "equity": 99387.581802,
+          "cash": 98976.613052,
+          "unrealized": 410.96875,
+          "drawdown": -0.00612418
+        },
+        {
+          "t": "2025-01-01T04:20:00",
+          "equity": 99391.748469,
+          "cash": 98976.613052,
+          "unrealized": 415.135417,
+          "drawdown": -0.00608252
+        },
+        {
+          "t": "2025-01-01T04:25:00",
+          "equity": 99395.915135,
+          "cash": 98976.613052,
+          "unrealized": 419.302083,
+          "drawdown": -0.00604085
+        },
+        {
+          "t": "2025-01-01T04:30:00",
+          "equity": 99400.081802,
+          "cash": 98976.613052,
+          "unrealized": 423.46875,
+          "drawdown": -0.00599918
+        },
+        {
+          "t": "2025-01-01T04:35:00",
+          "equity": 99404.248469,
+          "cash": 98976.613052,
+          "unrealized": 427.635417,
+          "drawdown": -0.00595752
+        },
+        {
+          "t": "2025-01-01T04:40:00",
+          "equity": 99408.415135,
+          "cash": 98976.613052,
+          "unrealized": 431.802083,
+          "drawdown": -0.00591585
+        },
+        {
+          "t": "2025-01-01T04:45:00",
+          "equity": 99412.581802,
+          "cash": 98976.613052,
+          "unrealized": 435.96875,
+          "drawdown": -0.00587418
+        },
+        {
+          "t": "2025-01-01T04:50:00",
+          "equity": 99416.748469,
+          "cash": 98976.613052,
+          "unrealized": 440.135417,
+          "drawdown": -0.00583252
+        },
+        {
+          "t": "2025-01-01T04:55:00",
+          "equity": 99420.915135,
+          "cash": 98976.613052,
+          "unrealized": 444.302083,
+          "drawdown": -0.00579085
+        },
+        {
+          "t": "2025-01-01T05:00:00",
+          "equity": 99425.081802,
+          "cash": 98976.613052,
+          "unrealized": 448.46875,
+          "drawdown": -0.00574918
+        },
+        {
+          "t": "2025-01-01T05:05:00",
+          "equity": 99429.248469,
+          "cash": 98976.613052,
+          "unrealized": 452.635417,
+          "drawdown": -0.00570752
+        },
+        {
+          "t": "2025-01-01T05:10:00",
+          "equity": 99433.415135,
+          "cash": 98976.613052,
+          "unrealized": 456.802083,
+          "drawdown": -0.00566585
+        },
+        {
+          "t": "2025-01-01T05:15:00",
+          "equity": 99437.581802,
+          "cash": 98976.613052,
+          "unrealized": 460.96875,
+          "drawdown": -0.00562418
+        },
+        {
+          "t": "2025-01-01T05:20:00",
+          "equity": 99441.748469,
+          "cash": 98976.613052,
+          "unrealized": 465.135417,
+          "drawdown": -0.00558252
+        },
+        {
+          "t": "2025-01-01T05:25:00",
+          "equity": 99445.915135,
+          "cash": 98976.613052,
+          "unrealized": 469.302083,
+          "drawdown": -0.00554085
+        },
+        {
+          "t": "2025-01-01T05:30:00",
+          "equity": 99450.081802,
+          "cash": 98976.613052,
+          "unrealized": 473.46875,
+          "drawdown": -0.00549918
+        },
+        {
+          "t": "2025-01-01T05:35:00",
+          "equity": 99454.248469,
+          "cash": 98976.613052,
+          "unrealized": 477.635417,
+          "drawdown": -0.00545752
+        },
+        {
+          "t": "2025-01-01T05:40:00",
+          "equity": 99458.415135,
+          "cash": 98976.613052,
+          "unrealized": 481.802083,
+          "drawdown": -0.00541585
+        },
+        {
+          "t": "2025-01-01T05:45:00",
+          "equity": 99462.581802,
+          "cash": 98976.613052,
+          "unrealized": 485.96875,
+          "drawdown": -0.00537418
+        },
+        {
+          "t": "2025-01-01T05:50:00",
+          "equity": 99466.748469,
+          "cash": 98976.613052,
+          "unrealized": 490.135417,
+          "drawdown": -0.00533252
+        },
+        {
+          "t": "2025-01-01T05:55:00",
+          "equity": 99470.915135,
+          "cash": 98976.613052,
+          "unrealized": 494.302083,
+          "drawdown": -0.00529085
+        },
+        {
+          "t": "2025-01-01T06:00:00",
+          "equity": 99475.081802,
+          "cash": 98976.613052,
+          "unrealized": 498.46875,
+          "drawdown": -0.00524918
+        },
+        {
+          "t": "2025-01-01T06:05:00",
+          "equity": 99479.248469,
+          "cash": 98976.613052,
+          "unrealized": 502.635417,
+          "drawdown": -0.00520752
+        },
+        {
+          "t": "2025-01-01T06:10:00",
+          "equity": 99483.415135,
+          "cash": 98976.613052,
+          "unrealized": 506.802083,
+          "drawdown": -0.00516585
+        },
+        {
+          "t": "2025-01-01T06:15:00",
+          "equity": 99487.581802,
+          "cash": 98976.613052,
+          "unrealized": 510.96875,
+          "drawdown": -0.00512418
+        },
+        {
+          "t": "2025-01-01T06:20:00",
+          "equity": 99491.748469,
+          "cash": 98976.613052,
+          "unrealized": 515.135417,
+          "drawdown": -0.00508252
+        },
+        {
+          "t": "2025-01-01T06:25:00",
+          "equity": 99495.915135,
+          "cash": 98976.613052,
+          "unrealized": 519.302083,
+          "drawdown": -0.00504085
+        },
+        {
+          "t": "2025-01-01T06:30:00",
+          "equity": 99500.081802,
+          "cash": 98976.613052,
+          "unrealized": 523.46875,
+          "drawdown": -0.00499918
+        },
+        {
+          "t": "2025-01-01T06:35:00",
+          "equity": 99504.248469,
+          "cash": 98976.613052,
+          "unrealized": 527.635417,
+          "drawdown": -0.00495752
+        },
+        {
+          "t": "2025-01-01T06:40:00",
+          "equity": 99508.415135,
+          "cash": 98976.613052,
+          "unrealized": 531.802083,
+          "drawdown": -0.00491585
+        },
+        {
+          "t": "2025-01-01T06:45:00",
+          "equity": 99512.581802,
+          "cash": 98976.613052,
+          "unrealized": 535.96875,
+          "drawdown": -0.00487418
+        },
+        {
+          "t": "2025-01-01T06:50:00",
+          "equity": 99516.748469,
+          "cash": 98976.613052,
+          "unrealized": 540.135417,
+          "drawdown": -0.00483252
+        },
+        {
+          "t": "2025-01-01T06:55:00",
+          "equity": 99520.915135,
+          "cash": 98976.613052,
+          "unrealized": 544.302083,
+          "drawdown": -0.00479085
+        },
+        {
+          "t": "2025-01-01T07:00:00",
+          "equity": 99525.081802,
+          "cash": 98976.613052,
+          "unrealized": 548.46875,
+          "drawdown": -0.00474918
+        },
+        {
+          "t": "2025-01-01T07:05:00",
+          "equity": 99529.248469,
+          "cash": 98976.613052,
+          "unrealized": 552.635417,
+          "drawdown": -0.00470752
+        },
+        {
+          "t": "2025-01-01T07:10:00",
+          "equity": 99533.415135,
+          "cash": 98976.613052,
+          "unrealized": 556.802083,
+          "drawdown": -0.00466585
+        },
+        {
+          "t": "2025-01-01T07:15:00",
+          "equity": 99537.581802,
+          "cash": 98976.613052,
+          "unrealized": 560.96875,
+          "drawdown": -0.00462418
+        },
+        {
+          "t": "2025-01-01T07:20:00",
+          "equity": 99541.748469,
+          "cash": 98976.613052,
+          "unrealized": 565.135417,
+          "drawdown": -0.00458252
+        },
+        {
+          "t": "2025-01-01T07:25:00",
+          "equity": 99545.915135,
+          "cash": 98976.613052,
+          "unrealized": 569.302083,
+          "drawdown": -0.00454085
+        },
+        {
+          "t": "2025-01-01T07:30:00",
+          "equity": 99550.081802,
+          "cash": 98976.613052,
+          "unrealized": 573.46875,
+          "drawdown": -0.00449918
+        },
+        {
+          "t": "2025-01-01T07:35:00",
+          "equity": 99554.248469,
+          "cash": 98976.613052,
+          "unrealized": 577.635417,
+          "drawdown": -0.00445752
+        },
+        {
+          "t": "2025-01-01T07:40:00",
+          "equity": 99558.415135,
+          "cash": 98976.613052,
+          "unrealized": 581.802083,
+          "drawdown": -0.00441585
+        },
+        {
+          "t": "2025-01-01T07:45:00",
+          "equity": 99562.581802,
+          "cash": 98976.613052,
+          "unrealized": 585.96875,
+          "drawdown": -0.00437418
+        },
+        {
+          "t": "2025-01-01T07:50:00",
+          "equity": 99566.748469,
+          "cash": 98976.613052,
+          "unrealized": 590.135417,
+          "drawdown": -0.00433252
+        },
+        {
+          "t": "2025-01-01T07:55:00",
+          "equity": 99570.915135,
+          "cash": 98976.613052,
+          "unrealized": 594.302083,
+          "drawdown": -0.00429085
+        },
+        {
+          "t": "2025-01-01T08:00:00",
+          "equity": 99575.081802,
+          "cash": 98976.613052,
+          "unrealized": 598.46875,
+          "drawdown": -0.00424918
+        },
+        {
+          "t": "2025-01-01T08:05:00",
+          "equity": 99579.248469,
+          "cash": 98976.613052,
+          "unrealized": 602.635417,
+          "drawdown": -0.00420752
+        },
+        {
+          "t": "2025-01-01T08:10:00",
+          "equity": 99583.415135,
+          "cash": 98976.613052,
+          "unrealized": 606.802083,
+          "drawdown": -0.00416585
+        },
+        {
+          "t": "2025-01-01T08:15:00",
+          "equity": 99587.581802,
+          "cash": 98976.613052,
+          "unrealized": 610.96875,
+          "drawdown": -0.00412418
+        },
+        {
+          "t": "2025-01-01T08:20:00",
+          "equity": 99591.748469,
+          "cash": 98976.613052,
+          "unrealized": 615.135417,
+          "drawdown": -0.00408252
+        },
+        {
+          "t": "2025-01-01T08:25:00",
+          "equity": 99595.915135,
+          "cash": 98976.613052,
+          "unrealized": 619.302083,
+          "drawdown": -0.00404085
+        },
+        {
+          "t": "2025-01-01T08:30:00",
+          "equity": 99600.081802,
+          "cash": 98976.613052,
+          "unrealized": 623.46875,
+          "drawdown": -0.00399918
+        },
+        {
+          "t": "2025-01-01T08:35:00",
+          "equity": 99604.248469,
+          "cash": 98976.613052,
+          "unrealized": 627.635417,
+          "drawdown": -0.00395752
+        },
+        {
+          "t": "2025-01-01T08:40:00",
+          "equity": 99608.415135,
+          "cash": 98976.613052,
+          "unrealized": 631.802083,
+          "drawdown": -0.00391585
+        },
+        {
+          "t": "2025-01-01T08:45:00",
+          "equity": 99612.581802,
+          "cash": 98976.613052,
+          "unrealized": 635.96875,
+          "drawdown": -0.00387418
+        },
+        {
+          "t": "2025-01-01T08:50:00",
+          "equity": 99616.748469,
+          "cash": 98976.613052,
+          "unrealized": 640.135417,
+          "drawdown": -0.00383252
+        },
+        {
+          "t": "2025-01-01T08:55:00",
+          "equity": 99620.915135,
+          "cash": 98976.613052,
+          "unrealized": 644.302083,
+          "drawdown": -0.00379085
+        },
+        {
+          "t": "2025-01-01T09:00:00",
+          "equity": 99625.081802,
+          "cash": 98976.613052,
+          "unrealized": 648.46875,
+          "drawdown": -0.00374918
+        },
+        {
+          "t": "2025-01-01T09:05:00",
+          "equity": 99629.248469,
+          "cash": 98976.613052,
+          "unrealized": 652.635417,
+          "drawdown": -0.00370752
+        },
+        {
+          "t": "2025-01-01T09:10:00",
+          "equity": 99633.415135,
+          "cash": 98976.613052,
+          "unrealized": 656.802083,
+          "drawdown": -0.00366585
+        },
+        {
+          "t": "2025-01-01T09:15:00",
+          "equity": 99637.581802,
+          "cash": 98976.613052,
+          "unrealized": 660.96875,
+          "drawdown": -0.00362418
+        },
+        {
+          "t": "2025-01-01T09:20:00",
+          "equity": 99641.748469,
+          "cash": 98976.613052,
+          "unrealized": 665.135417,
+          "drawdown": -0.00358252
+        },
+        {
+          "t": "2025-01-01T09:25:00",
+          "equity": 99645.915135,
+          "cash": 98976.613052,
+          "unrealized": 669.302083,
+          "drawdown": -0.00354085
+        },
+        {
+          "t": "2025-01-01T09:30:00",
+          "equity": 99650.081802,
+          "cash": 98976.613052,
+          "unrealized": 673.46875,
+          "drawdown": -0.00349918
+        },
+        {
+          "t": "2025-01-01T09:35:00",
+          "equity": 99654.248469,
+          "cash": 98976.613052,
+          "unrealized": 677.635417,
+          "drawdown": -0.00345752
+        },
+        {
+          "t": "2025-01-01T09:40:00",
+          "equity": 99658.415135,
+          "cash": 98976.613052,
+          "unrealized": 681.802083,
+          "drawdown": -0.00341585
+        },
+        {
+          "t": "2025-01-01T09:45:00",
+          "equity": 99662.581802,
+          "cash": 98976.613052,
+          "unrealized": 685.96875,
+          "drawdown": -0.00337418
+        },
+        {
+          "t": "2025-01-01T09:50:00",
+          "equity": 99662.581802,
+          "cash": 98976.613052,
+          "unrealized": 685.96875,
+          "drawdown": -0.00337418
+        },
+        {
+          "t": "2025-01-01T09:55:00",
+          "equity": 99662.581802,
+          "cash": 98976.613052,
+          "unrealized": 685.96875,
+          "drawdown": -0.00337418
+        },
+        {
+          "t": "2025-01-01T10:00:00",
+          "equity": 101059.946385,
+          "cash": 101059.946385,
+          "unrealized": 0.0,
+          "drawdown": 0.0
+        }
+      ],
+      "trades": [
+        {
+          "trade_id": "T00001",
+          "market_id": "BTC-MOVE-FIXTURE",
+          "venue": "KALSHI",
+          "outcome": "YES",
+          "side": "BUY",
+          "quantity": 2083.3333333333335,
+          "price": 0.490735,
+          "fees": 1.0223645833333335,
+          "slippage": 1.53125,
+          "intended_ts": "2025-01-01T03:20:00",
+          "fill_ts": "2025-01-01T03:25:00",
+          "signal_ts": "2025-01-01T03:20:00",
+          "reason": "entry"
+        },
+        {
+          "trade_id": "T00002",
+          "market_id": "BTC-MOVE-FIXTURE",
+          "venue": "KALSHI",
+          "outcome": "YES",
+          "side": "SELL",
+          "quantity": -2083.3333333333335,
+          "price": 1.0,
+          "fees": 0.0,
+          "slippage": 0.0,
+          "intended_ts": "2025-01-01T10:00:00",
+          "fill_ts": "2025-01-01T10:00:00",
+          "signal_ts": "2025-01-01T10:00:00",
+          "reason": "settlement"
+        }
+      ],
+      "signals": [
+        {
+          "timestamp": "2025-01-01T03:20:00",
+          "reference_return": 0.01200000000000001,
+          "target_price": 0.48
+        },
+        {
+          "timestamp": "2025-01-01T03:25:00",
+          "reference_return": 0.01200000000000001,
+          "target_price": 0.48
+        }
+      ],
+      "assumptions": {
+        "initial_capital": 100000.0,
+        "latency_ms": 100,
+        "slippage": "conservative",
+        "fees_bps": 10.0,
+        "execution_model": "market",
+        "timeframe": "5m",
+        "engine_version": "0.1.0"
+      },
+      "data_quality": {
+        "datasets": [
+          "binance_BTCUSDT_5m_a473a612ca201f61",
+          "kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5"
+        ],
+        "warnings": [],
+        "synthetic": true
+      },
+      "dataset_versions": [
+        {
+          "dataset_id": "binance_BTCUSDT_5m_a473a612ca201f61",
+          "data_version": "fixture-0.1",
+          "checksum": "a473a612ca201f61",
+          "synthetic": true
+        },
+        {
+          "dataset_id": "kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5",
+          "data_version": "fixture-0.1",
+          "checksum": "202e245d4cfee7c5",
+          "synthetic": true
+        }
+      ],
+      "engine_version": "0.1.0",
+      "feature_version": "0.1.0",
+      "warnings": [],
+      "strategy": {
+        "name": "btc_move_pm_reprice",
+        "hypothesis": "Test whether a 1% BTC move over 5 minutes predicts a delayed move in BTC-related prediction markets.",
+        "universe": {
+          "reference": {
+            "venue": "BINANCE",
+            "symbol": "BTCUSDT",
+            "market_id": null,
+            "ticker": null,
+            "category": null,
+            "outcome": null,
+            "token_id": null
+          },
+          "target": {
+            "venue": "KALSHI",
+            "symbol": null,
+            "market_id": "BTC-MOVE-FIXTURE",
+            "ticker": "BTC-MOVE-FIXTURE",
+            "category": null,
+            "outcome": null,
+            "token_id": null
+          },
+          "filters": {}
+        },
+        "data": {
+          "start": null,
+          "end": null,
+          "timeframe": "5m",
+          "require_quotes": false,
+          "require_trades": false,
+          "require_settlement": true
+        },
+        "features": [],
+        "signal": {
+          "type": "momentum",
+          "window": "5m",
+          "threshold": 0.01,
+          "lookback_bars": 1,
+          "source": "reference",
+          "compare": null,
+          "direction": "abs",
+          "lag_bars": 0
+        },
+        "entry": {
+          "action": "BUY",
+          "outcome": "YES",
+          "on": "signal"
+        },
+        "exit": {
+          "type": "SETTLEMENT",
+          "after": null,
+          "stop_pct": null
+        },
+        "sizing": {
+          "type": "fixed_notional",
+          "notional": 1000.0,
+          "contracts": 100.0,
+          "percent": 0.1,
+          "max_position": null
+        },
+        "risk": {
+          "max_drawdown_pct": null,
+          "max_trades": null,
+          "one_position": true
+        },
+        "execution": {
+          "model": "market",
+          "latency_ms": 100,
+          "slippage": "conservative",
+          "fee_bps": 10.0
+        },
+        "capital": {
+          "initial": 100000.0,
+          "currency": "USD"
+        },
+        "time": {
+          "trading_start": null,
+          "trading_end": null,
+          "exclude_after_expiry": true
+        },
+        "notes": ""
+      },
+      "strategy_fingerprint": "bfe8aeb7112ca1f7",
+      "recorded_fixture": true,
+      "synthetic": true
+    },
+    "ai_analysis": "Recorded by the Python engine against the synthetic fixtures shipped in tests/fixtures. This page did not call Grok and did not re-run the engine. Attach the API to execute a new hypothesis.",
+    "runtime": null,
+    "error": null,
+    "validation": {
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        {
+          "field": "data",
+          "message": "Dataset binance_BTCUSDT_5m_a473a612ca201f61 is labelled SYNTHETIC/FIXTURE. Do not treat results as live market performance.",
+          "code": "synthetic"
+        },
+        {
+          "field": "data",
+          "message": "Dataset kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5 is labelled SYNTHETIC/FIXTURE. Do not treat results as live market performance.",
+          "code": "synthetic"
+        }
+      ]
+    },
+    "synthetic": true,
+    "recorded_fixture": true
+  },
+  "markets": [
+    {
+      "venue": "BINANCE",
+      "symbol": "BTCUSDT",
+      "market_id": "BTCUSDT",
+      "kind": "spot",
+      "quote": "USDT"
+    },
+    {
+      "venue": "BINANCE",
+      "symbol": "ETHUSDT",
+      "market_id": "ETHUSDT",
+      "kind": "spot",
+      "quote": "USDT"
+    },
+    {
+      "venue": "BINANCE",
+      "symbol": "SOLUSDT",
+      "market_id": "SOLUSDT",
+      "kind": "spot",
+      "quote": "USDT"
+    },
+    {
+      "venue": "BINANCE",
+      "symbol": "BNBUSDT",
+      "market_id": "BNBUSDT",
+      "kind": "spot",
+      "quote": "USDT"
+    },
+    {
+      "venue": "KALSHI",
+      "market_id": "BTC-MOVE-FIXTURE",
+      "ticker": "BTC-MOVE-FIXTURE",
+      "title": "BTC-MOVE-FIXTURE",
+      "period": "2025-01-01/2025-01-01",
+      "rows": 121,
+      "synthetic": true,
+      "quality": "ok",
+      "source": "catalog"
+    },
+    {
+      "venue": "POLYMARKET",
+      "market_id": "btc-up-fixture",
+      "question": "btc-up-fixture",
+      "period": "2025-01-01/2025-01-01",
+      "rows": 121,
+      "synthetic": true,
+      "quality": "ok",
+      "source": "catalog"
+    }
+  ],
+  "datasets": [
+    {
+      "dataset_id": "kalshi_BTC_MOVE_FIXTURE_5m_202e245d4cfee7c5",
+      "venue": "KALSHI",
+      "instrument": "BTC-MOVE-FIXTURE",
+      "timeframe": "5m",
+      "period": "2025-01-01/2025-01-01",
+      "rows": 121,
+      "synthetic": true,
+      "data_version": "fixture-0.1",
+      "checksum": "202e245d4cfee7c5",
+      "data_quality": {
+        "status": "ok",
+        "warnings": []
+      }
+    },
+    {
+      "dataset_id": "binance_BTCUSDT_5m_a473a612ca201f61",
+      "venue": "BINANCE",
+      "instrument": "BTCUSDT",
+      "timeframe": "5m",
+      "period": "2025-01-01/2025-01-01",
+      "rows": 120,
+      "synthetic": true,
+      "data_version": "fixture-0.1",
+      "checksum": "a473a612ca201f61",
+      "data_quality": {
+        "status": "ok",
+        "warnings": []
+      }
+    },
+    {
+      "dataset_id": "polymarket_btc_up_fixture_5m_734ea420280fdbc9",
+      "venue": "POLYMARKET",
+      "instrument": "btc-up-fixture",
+      "timeframe": "5m",
+      "period": "2025-01-01/2025-01-01",
+      "rows": 121,
+      "synthetic": true,
+      "data_version": "fixture-0.1",
+      "checksum": "734ea420280fdbc9",
+      "data_quality": {
+        "status": "ok",
+        "warnings": []
+      }
+    }
+  ]
+}
