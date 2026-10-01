@@ -33,6 +33,10 @@ body {
   min-height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-feature-settings: "ss01" 1;
   transition: background-color 180ms ease, color 180ms ease;
@@ -43,10 +47,84 @@ button,
   cursor: pointer;
 }
 
+::selection {
+  background: var(--fg);
+  color: var(--bg);
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--line);
+}
+
+.hero-lattice {
+  background-image:
+    linear-gradient(to right, rgba(232, 234, 237, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(232, 234, 237, 0.055) 1px, transparent 1px);
+  background-size: 88px 88px;
+  -webkit-mask-image: radial-gradient(ellipse 72% 58% at 50% 38%, #000 8%, transparent 74%);
+  mask-image: radial-gradient(ellipse 72% 58% at 50% 38%, #000 8%, transparent 74%);
+  animation: lattice-drift 42s linear infinite;
+}
+
+.hero-glow {
+  background: radial-gradient(ellipse 46% 36% at 50% 28%, rgba(232, 234, 237, 0.07), transparent 70%);
+}
+
+.hero-in {
+  animation: rise-in 720ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.rise {
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 700ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.m-motion .rise:not(.show) {
+  opacity: 0;
+  transform: translateY(18px);
+  filter: blur(4px);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes lattice-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 88px 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .hero-lattice,
+  .hero-in {
+    animation: none;
+  }
+  .m-motion .rise:not(.show) {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
 }

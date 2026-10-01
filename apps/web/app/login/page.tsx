@@ -1,16 +1,21 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { signIn } from "@/lib/desk";
+import { loadSession, signIn } from "@/lib/desk";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loadSession()) router.replace("/research");
+  }, [router]);
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -58,6 +63,7 @@ export default function LoginPage() {
           Back to the site
         </Link>
       </main>
+      <SiteFooter />
     </div>
   );
 }
