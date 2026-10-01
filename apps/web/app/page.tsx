@@ -158,15 +158,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-6xl px-5 pb-10 pt-2 md:px-8 md:pb-20">
-            <StrategyThread />
-          </div>
-        </section>
-
-        <section id="why" className="scroll-mt-20 mx-auto w-full max-w-6xl px-5 py-24 md:px-8 md:py-32">
+        <section id="solutions" className="scroll-mt-20 mx-auto w-full max-w-6xl px-5 pb-8 pt-10 md:px-8">
           <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Why Molecule</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solutions</p>
             <h2 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
               Anyone can trade
             </h2>
@@ -179,7 +173,7 @@ export default function Home() {
           <div className="mt-14 grid border border-line md:grid-cols-3">
             {WHY.map((item, i) => (
               <Reveal key={item.n} delay={i * 90} className="h-full">
-                <article className="h-full border-b border-line px-6 py-8 transition-colors duration-200 last:border-b-0 hover:bg-ink-900 md:border-b-0 md:border-r md:last:border-r-0">
+                <article className="h-full border-b border-line px-6 py-8 transition duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-ink-900 md:border-b-0 md:border-r md:last:border-r-0">
                   <div className="flex items-baseline justify-between gap-4">
                     <h3 className="text-base font-semibold">{item.title}</h3>
                     <span className="font-mono text-xs text-mute">{item.n}</span>
@@ -188,6 +182,12 @@ export default function Home() {
                 </article>
               </Reveal>
             ))}
+          </div>
+        </section>
+
+        <section id="product" className="scroll-mt-20">
+          <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-4 md:px-8">
+            <StrategyThread />
           </div>
         </section>
 

@@ -87,9 +87,15 @@ function SettingsInner() {
       <div className="flex flex-col gap-8 md:flex-row md:gap-10">
         <aside className="w-full shrink-0 md:w-56">
           <div className="flex items-center gap-3 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line font-mono text-xs">
-              {(profile.firstName || "M").slice(0, 1).toUpperCase()}
-              {(profile.lastName || "").slice(0, 1).toUpperCase()}
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-line font-mono text-xs">
+              {profile.avatar ? (
+                <img src={profile.avatar} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <>
+                  {(profile.firstName || "M").slice(0, 1).toUpperCase()}
+                  {(profile.lastName || "").slice(0, 1).toUpperCase()}
+                </>
+              )}
             </div>
             <div className="min-w-0">
               <div className="truncate text-sm">
@@ -132,6 +138,22 @@ function SettingsInner() {
               <div className="mt-6 rounded-2xl border border-line bg-ink-900 p-5">
                 <h2 className="text-sm font-medium">Your details</h2>
                 <p className="mt-1 text-xs text-mute">This is how your name appears across Molecule.</p>
+                <label className="mt-4 flex items-center gap-3 text-xs text-mute">
+                  <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line">
+                    {profile.avatar ? <img src={profile.avatar} alt="" className="h-full w-full object-cover" /> : "Photo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setProfile({ ...profile, avatar: String(reader.result || "") });
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   <label className="text-xs text-mute">
                     First name

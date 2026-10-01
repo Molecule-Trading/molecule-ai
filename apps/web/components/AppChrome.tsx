@@ -25,7 +25,7 @@ export function AppChrome() {
             <Link
               key={l.href}
               href={l.href}
-              className={`whitespace-nowrap ${on ? "font-medium text-text" : "hover:text-text"}`}
+              className={`whitespace-nowrap transition-colors duration-200 ${on ? "font-medium text-text" : "hover:text-text"}`}
             >
               {l.label}
             </Link>

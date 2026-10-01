@@ -15,6 +15,7 @@ export type Profile = {
   firstName: string;
   lastName: string;
   email: string;
+  avatar?: string;
 };
 
 export type Brokerage = {

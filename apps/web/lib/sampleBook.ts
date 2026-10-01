@@ -1,6 +1,6 @@
 /** Deterministic desk sample. Metrics are computed from this series, not typed in. */
 
-export type Bar = { t: string; equity: number; drawdown: number };
+export type Bar = { t: string; equity: number; drawdown: number; bench?: number };
 export type SampleTrade = {
   trade_id: string;
   side: "BUY" | "SELL";
@@ -11,12 +11,19 @@ export type SampleTrade = {
 };
 export type Metrics = {
   total_return: number;
+  cagr: number;
+  gross_pnl: number;
   net_pnl: number;
   sharpe: number | null;
   sortino: number | null;
+  calmar: number | null;
   max_drawdown: number;
+  max_dd_days: number;
+  max_gain: number;
+  max_loss: number;
   win_rate: number | null;
   trade_count: number;
+  starting_equity: number;
   ending_equity: number;
   volatility: number | null;
 };
@@ -46,10 +53,10 @@ function gauss(rng: () => number) {
 
 function sessions(count: number) {
   const out: string[] = [];
-  const d = new Date(Date.UTC(2020, 9, 1, 16, 0, 0));
+  const d = new Date(Date.UTC(2020, 9, 1));
   while (out.length < count) {
     const day = d.getUTCDay();
-    if (day !== 0 && day !== 6) out.push(d.toISOString().slice(0, 19));
+    if (day !== 0 && day !== 6) out.push(d.toISOString().slice(0, 10));
     d.setUTCDate(d.getUTCDate() + 1);
   }
   return out;
@@ -61,7 +68,7 @@ function stdev(xs: number[]) {
   return Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1));
 }
 
-export function metricsOf(equity: number[], closedPnl: number[]): Metrics {
+export function metricsOf(equity: number[], closedPnl: number[], grossEnd?: number): Metrics {
   const start = equity[0] ?? 100000;
   const end = equity[equity.length - 1] ?? start;
   const rets: number[] = [];
@@ -71,35 +78,55 @@ export function metricsOf(equity: number[], closedPnl: number[]): Metrics {
   const down = rets.length ? Math.sqrt(rets.reduce((s, x) => s + Math.min(x, 0) ** 2, 0) / rets.length) : 0;
   let peak = start;
   let mdd = 0;
+  let underwater = 0;
+  let maxUnder = 0;
   for (const e of equity) {
     peak = Math.max(peak, e);
-    mdd = Math.min(mdd, e / peak - 1);
+    const dd = e / peak - 1;
+    mdd = Math.min(mdd, dd);
+    if (dd < -0.0001) {
+      underwater += 1;
+      maxUnder = Math.max(maxUnder, underwater);
+    } else underwater = 0;
   }
   const wins = closedPnl.filter((p) => p > 0).length;
+  const years = Math.max(rets.length / 252, 1 / 252);
+  const cagr = end > 0 && start > 0 ? (end / start) ** (1 / years) - 1 : 0;
+  const gains = rets.filter((r) => r > 0);
+  const losses = rets.filter((r) => r < 0);
   return {
     total_return: end / start - 1,
+    cagr,
+    gross_pnl: (grossEnd ?? end) - start,
     net_pnl: end - start,
     sharpe: sd > 0 ? (mean / sd) * Math.sqrt(252) : null,
     sortino: down > 0 ? (mean / down) * Math.sqrt(252) : null,
+    calmar: mdd < 0 ? cagr / Math.abs(mdd) : null,
     max_drawdown: mdd,
+    max_dd_days: maxUnder,
+    max_gain: gains.length ? Math.max(...gains) : 0,
+    max_loss: losses.length ? Math.min(...losses) : 0,
     win_rate: closedPnl.length ? wins / closedPnl.length : null,
     trade_count: closedPnl.length,
+    starting_equity: start,
     ending_equity: end,
     volatility: sd > 0 ? sd * Math.sqrt(252) : null,
   };
 }
 
+type Day = { t: string; asset: number; pos: number; turn: number; px: number };
 type Built = {
   bars: Bar[];
   trades: SampleTrade[];
   closed: { t: string; pnl: number }[];
   rets: number[];
+  days: Day[];
 };
 
 function build(seed = 8): Built {
   const rng = mulberry32(seed);
   const n = 1512;
-  const days = sessions(n + 1);
+  const calendar = sessions(n + 1);
   const px = [100];
   for (let i = 0; i < n; i++) px.push(px[px.length - 1] * Math.exp(0.00015 + 0.013 * gauss(rng)));
   const rets = [0];
@@ -112,6 +139,7 @@ function build(seed = 8): Built {
   const trades: SampleTrade[] = [];
   const closed: { t: string; pnl: number }[] = [];
   const stratRets: number[] = [];
+  const tape: Day[] = [];
   let peak = capital;
   let fills = 0;
 
@@ -125,16 +153,17 @@ function build(seed = 8): Built {
     const med = hist[Math.floor(hist.length / 2)];
     const want = ret20 > 0 && vol < med ? 1 : 0;
     const fee = want !== pos ? 0.001 : 0;
+    const turn = want !== pos ? 1 : 0;
     if (want !== pos) {
-      if (pos === 1 && want === 0) closed.push({ t: days[i], pnl: capital - entry });
+      if (pos === 1 && want === 0) closed.push({ t: calendar[i], pnl: capital - entry });
       fills += 1;
-      const qty = capital / px[i];
+      const qty = Math.max(1, Math.round(capital / px[i]));
       trades.push({
         trade_id: `T${String(fills).padStart(5, "0")}`,
         side: want === 1 ? "BUY" : "SELL",
         quantity: qty,
         price: px[i],
-        fill_ts: days[i],
+        fill_ts: calendar[i],
         reason: want === 1 ? "return positive, vol below median" : "gate failed",
       });
       if (want === 1) entry = capital;
@@ -142,11 +171,12 @@ function build(seed = 8): Built {
     }
     const r = pos * rets[i] - fee;
     stratRets.push(r);
+    tape.push({ t: calendar[i], asset: rets[i], pos, turn, px: px[i] });
     capital *= 1 + r;
     peak = Math.max(peak, capital);
-    bars.push({ t: days[i], equity: capital, drawdown: capital / peak - 1 });
+    bars.push({ t: calendar[i], equity: capital, drawdown: capital / peak - 1 });
   }
-  return { bars, trades, closed, rets: stratRets };
+  return { bars, trades, closed, rets: stratRets, days: tape };
 }
 
 const BOOK = build(8);
@@ -163,11 +193,8 @@ export const ASSUMPTIONS = [
 ];
 
 export function windowOf(span: Span) {
-  const bars = span === "MAX" ? BOOK.bars : BOOK.bars.slice(-SESSIONS[span]);
-  const start = bars[0]?.t ?? "";
-  const trades = BOOK.trades.filter((t) => t.fill_ts >= start);
-  const closed = BOOK.closed.filter((c) => c.t >= start).map((c) => c.pnl);
-  return { bars, trades, metrics: metricsOf(bars.map((b) => b.equity), closed) };
+  const q = quote(span);
+  return { bars: q.bars, trades: q.trades, metrics: q.metrics };
 }
 
 export function splitOf(bars: Bar[]) {
@@ -185,6 +212,94 @@ export function splitOf(bars: Bar[]) {
       rightClosed,
     ),
   };
+}
+
+export function quote(span: Span, feePct = 0.1, slipPct = 0.05) {
+  const cost = Math.max(0, feePct + slipPct) / 100;
+  const sliced = span === "MAX" ? BOOK.days : BOOK.days.slice(-SESSIONS[span]);
+  let capital = 100000;
+  let gross = 100000;
+  let bench = 100000;
+  let peak = capital;
+  let entry = capital;
+  const bars: Bar[] = [];
+  const benchBars: { t: string; bench: number }[] = [];
+  const trades: SampleTrade[] = [];
+  const closed: number[] = [];
+  const rets: number[] = [];
+  const vols: number[] = [];
+  let fills = 0;
+  sliced.forEach((d, i) => {
+    const drag = d.turn ? cost : 0;
+    const r = d.pos * d.asset - drag;
+    if (d.turn) {
+      if (d.pos === 0) closed.push(capital - entry);
+      fills += 1;
+      trades.push({
+        trade_id: `T${String(fills).padStart(5, "0")}`,
+        side: d.pos === 1 ? "BUY" : "SELL",
+        quantity: Math.max(1, Math.round(capital / d.px)),
+        price: d.px,
+        fill_ts: d.t,
+        reason: d.pos === 1 ? "return positive, vol below median" : "gate failed",
+      });
+      if (d.pos === 1) entry = capital;
+    }
+    capital *= 1 + r;
+    gross *= 1 + d.pos * d.asset;
+    bench *= 1 + d.asset;
+    peak = Math.max(peak, capital);
+    rets.push(r);
+    if (i >= 19) vols.push(stdev(rets.slice(i - 19, i + 1)) * Math.sqrt(252));
+    bars.push({ t: d.t, equity: capital, drawdown: capital / peak - 1, bench });
+    benchBars.push({ t: d.t, bench });
+  });
+  return {
+    bars,
+    benchBars,
+    trades,
+    rets,
+    vols,
+    metrics: metricsOf(bars.map((b) => b.equity), closed, gross),
+  };
+}
+
+export function monthsOf(bars: Bar[]) {
+  const cells = new Map<string, number>();
+  const byYear = new Map<string, Bar[]>();
+  for (let i = 1; i < bars.length; i++) {
+    const y = bars[i].t.slice(0, 4);
+    const m = Number(bars[i].t.slice(5, 7));
+    const key = `${y}-${m}`;
+    const r = bars[i].equity / bars[i - 1].equity - 1;
+    cells.set(key, (cells.get(key) || 0) + r);
+    const list = byYear.get(y) || [];
+    list.push(bars[i]);
+    byYear.set(y, list);
+  }
+  const years = [...byYear.keys()].sort();
+  return {
+    years,
+    cell: (y: string, m: number) => cells.get(`${y}-${m}`),
+    yearStats: years.map((y) => {
+      const slice = byYear.get(y) || [];
+      const m = metricsOf(slice.map((b) => b.equity), []);
+      return { year: y, dd: m.max_drawdown, sharpe: m.sharpe, days: m.max_dd_days };
+    }),
+  };
+}
+
+export function histOf(values: number[], bins = 24) {
+  if (!values.length) return [];
+  const lo = Math.min(...values);
+  const hi = Math.max(...values);
+  const span = hi - lo || 1;
+  const counts = Array.from({ length: bins }, (_, i) => ({ x: lo + (span * (i + 0.5)) / bins, n: 0 }));
+  for (const v of values) {
+    const i = Math.min(bins - 1, Math.floor(((v - lo) / span) * bins));
+    counts[i].n += 1;
+  }
+  return counts;
 }
 
 export function fanOf(bars: Bar[], paths = 48): FanPoint[] {

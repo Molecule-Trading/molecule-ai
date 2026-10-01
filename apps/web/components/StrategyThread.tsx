@@ -7,9 +7,9 @@ import { windowOf } from "@/lib/sampleBook";
 const USER = "Buy when the twenty-day return is positive and volatility is falling.";
 
 const REPLY = [
-  "Long only when both gates are on.",
-  "Entry when the twenty-session return is above zero and realized volatility is below its own median.",
-  "Exit when either gate fails. Costs stay on the path.",
+  { text: "Long only when both gates are on.", strong: "" },
+  { text: "Entry when the twenty-session return is above zero and realized volatility is below its own median.", strong: "Entry" },
+  { text: "Exit when either gate fails. Costs stay on the path.", strong: "Exit" },
 ];
 
 const view = windowOf("MAX");
@@ -46,7 +46,7 @@ export function StrategyThread() {
         </div>
         <p className="font-mono text-[11px] text-mute">molecule 1.0</p>
       </div>
-      <div className="flex min-h-[520px] flex-col gap-5 px-5 py-6 md:px-8" aria-live="polite">
+      <div className="flex max-h-[640px] flex-col gap-5 overflow-y-auto px-5 py-6 md:px-8" aria-live="polite">
         {phase >= 1 && (
           <div className="flex justify-end">
             <p className="thread-in max-w-xl rounded-2xl rounded-br-md bg-ink-800 px-4 py-3 text-sm leading-relaxed text-text">
@@ -59,16 +59,18 @@ export function StrategyThread() {
             <img src="/icon-32.png" alt="" className="mt-0.5 h-7 w-7 shrink-0" />
             <div className="min-w-0 flex-1 space-y-3">
               {lines.map((line) => (
-                <p key={line} className="thread-in max-w-2xl text-sm leading-relaxed text-text">
-                  {line}
+                <p key={line.text} className="thread-in max-w-2xl text-sm leading-relaxed text-text">
+                  {line.strong ? <strong className="font-semibold">{line.strong}</strong> : null}
+                  {line.strong ? line.text.slice(line.strong.length) : line.text}
                 </p>
               ))}
               {done && (
                 <div className="thread-in space-y-4">
-                  <div className="grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-5">
-                    <Metric k="Return" v={pct(m.total_return)} tone={m.total_return} />
+                  <div className="grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
+                    <Metric k="CAGR" v={pct(m.cagr)} tone={m.cagr} />
                     <Metric k="Sharpe" v={num(m.sharpe)} tone={m.sharpe} />
                     <Metric k="Sortino" v={num(m.sortino)} tone={m.sortino} />
+                    <Metric k="Calmar" v={num(m.calmar)} tone={m.calmar} />
                     <Metric k="Max DD" v={pct(m.max_drawdown)} tone={m.max_drawdown} down />
                     <Metric k="Trades" v={String(view.trades.length)} />
                   </div>

@@ -2,6 +2,8 @@
 
 import {
   Area,
+  Bar,
+  BarChart,
   CartesianGrid,
   ComposedChart,
   Line,
@@ -54,47 +56,47 @@ export function EquityChart({
   data,
   height = 300,
   splitAt,
+  scale = "equity",
 }: {
-  data: { t: string; equity: number }[];
+  data: { t: string; equity: number; bench?: number }[];
   height?: number;
   splitAt?: string;
+  scale?: "equity" | "pct" | "log";
 }) {
   const days = spanDays(data);
+  const start = data[0]?.equity || 1;
+  const up = (data[data.length - 1]?.equity || 0) >= start;
+  const series = data.map((d) => ({
+    ...d,
+    y: scale === "pct" ? (d.equity / start - 1) * 100 : d.equity,
+    b: d.bench == null ? undefined : scale === "pct" ? (d.bench / (data[0].bench || start) - 1) * 100 : d.bench,
+  }));
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={frame}>
+        <ComposedChart data={series} margin={frame}>
           <defs>
             <linearGradient id="eqFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e8eaed" stopOpacity={0.18} />
-              <stop offset="100%" stopColor="#e8eaed" stopOpacity={0} />
+              <stop offset="0%" stopColor={up ? "#34d399" : "#f87171"} stopOpacity={0.2} />
+              <stop offset="100%" stopColor={up ? "#34d399" : "#f87171"} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid stroke={GRID} vertical={false} />
-          <XAxis
-            dataKey="t"
-            tick={AXIS}
-            tickFormatter={(v) => tickOf(String(v), days)}
-            minTickGap={56}
-            axisLine={{ stroke: "#2a2f36" }}
-            tickLine={false}
-          />
+          <XAxis dataKey="t" tick={AXIS} tickFormatter={(v) => tickOf(String(v), days)} minTickGap={56} axisLine={{ stroke: "#2a2f36" }} tickLine={false} />
           <YAxis
             orientation="right"
             tick={AXIS}
             width={72}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v) => money(Number(v))}
-            domain={["auto", "auto"]}
+            scale={scale === "log" ? "log" : "auto"}
+            domain={scale === "log" ? ["auto", "auto"] : ["auto", "auto"]}
+            tickFormatter={(v) => (scale === "pct" ? `${Number(v).toFixed(0)}%` : money(Number(v)))}
           />
-          <Tooltip
-            contentStyle={TIP}
-            labelFormatter={(v) => stamp(String(v))}
-            formatter={(v) => [money(Number(v)), "Equity"]}
-          />
-          {splitAt && <ReferenceLine x={splitAt} stroke="#8b939e" strokeDasharray="3 3" />}
-          <Area type="monotone" dataKey="equity" stroke="#e8eaed" strokeWidth={1.6} fill="url(#eqFill)" isAnimationActive animationDuration={700} />
+          <Tooltip contentStyle={TIP} labelFormatter={(v) => String(v)} formatter={(v, name) => [scale === "pct" ? `${Number(v).toFixed(2)}%` : money(Number(v)), name === "b" ? "Benchmark" : "Book"]} />
+          {splitAt && <ReferenceLine x={splitAt} stroke="#f87171" strokeDasharray="3 3" />}
+          <Line type="monotone" dataKey="b" stroke="#6f7782" dot={false} strokeWidth={1} isAnimationActive animationDuration={600} />
+          <Area type="monotone" dataKey="y" stroke={up ? "#34d399" : "#f87171"} strokeWidth={1.7} fill="url(#eqFill)" isAnimationActive animationDuration={700} />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
@@ -181,8 +183,26 @@ export function MonteCarloChart({
             }}
           />
           <Area type="monotone" dataKey="band" stroke="none" fill="rgba(232,234,237,0.14)" isAnimationActive animationDuration={700} />
-          <Line type="monotone" dataKey="p50" stroke="#e8eaed" dot={false} strokeWidth={1.6} isAnimationActive animationDuration={700} />
+          <Line type="monotone" dataKey="p10" stroke="#6f7782" dot={false} strokeDasharray="3 3" strokeWidth={1} />
+          <Line type="monotone" dataKey="p90" stroke="#6f7782" dot={false} strokeDasharray="3 3" strokeWidth={1} />
+          <Line type="monotone" dataKey="p50" stroke="#e8eaed" dot={false} strokeWidth={1.7} isAnimationActive animationDuration={700} />
         </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export function DistChart({ data, height = 260, label }: { data: { x: number; n: number }[]; height?: number; label: string }) {
+  return (
+    <div className="w-full" style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={frame}>
+          <CartesianGrid stroke={GRID} vertical={false} />
+          <XAxis dataKey="x" tick={AXIS} tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`} axisLine={{ stroke: "#2a2f36" }} tickLine={false} />
+          <YAxis orientation="right" tick={AXIS} width={42} axisLine={false} tickLine={false} />
+          <Tooltip contentStyle={TIP} formatter={(v) => [v, label]} labelFormatter={(v) => `${(Number(v) * 100).toFixed(2)}%`} />
+          <Bar dataKey="n" fill="#e8eaed" radius={[2, 2, 0, 0]} isAnimationActive animationDuration={600} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
