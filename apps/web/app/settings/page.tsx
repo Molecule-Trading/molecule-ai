@@ -2,13 +2,12 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
-import { Pricing } from "@/components/Pricing";
 import {
   loadPlan,
   loadProfile,
   loadSafety,
+  savePlan,
   saveProfile,
   saveSafety,
   signOutLocal,
@@ -18,7 +17,6 @@ import {
 
 const TABS = [
   { id: "profile", label: "Profile" },
-  { id: "pricing", label: "Pricing" },
   { id: "safety", label: "Automation & Safety" },
   { id: "security", label: "Security" },
   { id: "billing", label: "Billing" },
@@ -46,22 +44,20 @@ function SettingsInner() {
     killSwitch: false,
     maxNotional: "100000",
   });
-  const [health, setHealth] = useState<any>(null);
-  const [planLabel, setPlanLabel] = useState("Free");
+  const [plan, setPlan] = useState<"free" | "pro">("free");
+  const [twoFa, setTwoFa] = useState(false);
+  const [resetNote, setResetNote] = useState<string | null>(null);
 
   useEffect(() => {
     setProfile(loadProfile());
     setSafety(loadSafety());
-    api("/health")
-      .then(setHealth)
-      .catch((e) => setHealth({ error: String(e) }));
-    const p = loadPlan();
-    setPlanLabel(p.plan === "pro" ? `Pro · ${p.cycle}` : "Free");
+    setPlan(loadPlan().plan);
+    setTwoFa(window.localStorage.getItem("molecule.desk.2fa") === "1");
   }, [tab]);
 
   useEffect(() => {
     const t = params.get("tab");
-    if (t === "brokerages") setTab("pricing");
+    if (t === "brokerages" || t === "pricing") setTab("billing");
     else if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
     else setTab("profile");
   }, [params]);
@@ -85,8 +81,8 @@ function SettingsInner() {
 
   return (
     <PageShell>
-      <div className={tab === "pricing" ? "" : "flex flex-col gap-8 md:flex-row md:gap-10"}>
-        {tab !== "pricing" && (
+      <div className="mx-auto w-full max-w-5xl">
+      <div className="flex flex-col gap-8 md:flex-row md:gap-10">
         <aside className="w-full shrink-0 md:w-56">
           <div className="flex items-center gap-3 pb-4">
             <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line font-mono text-xs">
@@ -125,7 +121,6 @@ function SettingsInner() {
             </button>
           </div>
         </aside>
-        )}
 
         <main className="min-w-0 flex-1">
           {tab === "profile" && (
@@ -173,18 +168,9 @@ function SettingsInner() {
             </section>
           )}
 
-          {tab === "pricing" && (
-            <Pricing
-              onBack={() => {
-                setTab("profile");
-                router.replace("/settings?tab=profile", { scroll: false });
-              }}
-            />
-          )}
-
           {tab === "safety" && (
             <section className="max-w-xl">
-              <h1 className="font-serif text-4xl font-medium">Automation &amp; Safety</h1>
+              <h1 className="font-serif text-4xl font-medium">Automation & Safety</h1>
               <p className="mt-2 text-sm text-mute">Guardrails for this browser session.</p>
               <div className="mt-6 space-y-3 rounded-2xl border border-line bg-ink-900 p-5">
                 <label className="flex items-center justify-between text-sm">
@@ -218,12 +204,49 @@ function SettingsInner() {
           {tab === "security" && (
             <section className="max-w-xl">
               <h1 className="font-serif text-4xl font-medium">Security</h1>
-              <p className="mt-2 text-sm text-mute">
-                This hosted desk stores profile and chats in local storage. API keys never enter the
-                browser.
-              </p>
-              <div className="mt-6 rounded-2xl border border-line bg-ink-900 p-5 text-sm text-mute">
-                Engine {health?.engine_version || "—"} · {health?.mode === "ui-only" ? "UI only" : "API attached"}
+              <p className="mt-2 text-sm text-mute">Password, two-factor authentication, and sessions.</p>
+              <div className="mt-6 rounded-2xl border border-line bg-ink-900">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="text-sm font-medium">Two-factor authentication</h2>
+                  <p className="mt-1 text-sm text-mute">
+                    Require a 6-digit code from an authenticator app at login.
+                  </p>
+                </div>
+                <div className="px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !twoFa;
+                      setTwoFa(next);
+                      window.localStorage.setItem("molecule.desk.2fa", next ? "1" : "0");
+                    }}
+                    className="rounded-lg bg-text px-4 py-2 text-sm font-medium text-ink-950"
+                  >
+                    {twoFa ? "2FA enabled" : "Enable 2FA"}
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-line bg-ink-900">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="text-sm font-medium">Password</h2>
+                  <p className="mt-1 text-sm text-mute">We’ll email you a secure link to set a new password.</p>
+                </div>
+                <div className="px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setResetNote(
+                        profile.email
+                          ? `Reset noted for ${profile.email}. No mail service is attached, so nothing was sent.`
+                          : "Add an email on Profile first. Nothing was sent.",
+                      )
+                    }
+                    className="rounded-lg border border-line bg-ink-800 px-4 py-2 text-sm text-text"
+                  >
+                    Reset password
+                  </button>
+                  {resetNote && <p className="mt-3 text-xs text-mute">{resetNote}</p>}
+                </div>
               </div>
             </section>
           )}
@@ -231,24 +254,31 @@ function SettingsInner() {
           {tab === "billing" && (
             <section className="max-w-xl">
               <h1 className="font-serif text-4xl font-medium">Billing</h1>
-              <p className="mt-2 text-sm text-mute">No card is charged from this desk.</p>
-              <div className="mt-6 rounded-2xl border border-line bg-ink-900 p-5">
-                <div className="text-sm">Plan</div>
-                <div className="mt-1 font-serif text-2xl">{planLabel}</div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTab("pricing");
-                    router.replace("/settings?tab=pricing", { scroll: false });
-                  }}
-                  className="mt-4 text-sm text-text underline"
-                >
-                  Change plan
-                </button>
+              <p className="mt-2 text-sm text-mute">Your plan and payment method.</p>
+              <div className="mt-6 rounded-2xl border border-line bg-ink-900">
+                <div className="border-b border-line px-5 py-4">
+                  <h2 className="text-sm font-medium">Plan</h2>
+                  <p className="mt-1 text-sm text-mute">Your subscription and renewal date.</p>
+                </div>
+                <div className="px-5 py-4">
+                  <p className="text-sm">{plan === "pro" ? "Pro" : "No active subscription."}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = plan === "pro" ? "free" : "pro";
+                      setPlan(next);
+                      savePlan({ plan: next, cycle: "monthly" });
+                    }}
+                    className="mt-4 rounded-lg bg-text px-4 py-2 text-sm font-medium text-ink-950"
+                  >
+                    {plan === "pro" ? "Cancel" : "Subscribe"}
+                  </button>
+                </div>
               </div>
             </section>
           )}
         </main>
+      </div>
       </div>
     </PageShell>
   );

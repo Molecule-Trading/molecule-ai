@@ -30,15 +30,13 @@ export default function RunsPage() {
     });
   }, [runs, tab, q, paperIds]);
 
-  const running = runs.filter((r) => r.status === "RUNNING" || r.status === "QUEUED").length;
-
   return (
     <PageShell>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Strategies</div>
           <h1 className="mt-1 font-serif text-4xl font-medium tracking-tight">Your strategies</h1>
-          <p className="mt-2 text-sm text-mute">{running} running</p>
+          <p className="mt-2 text-sm text-mute">{runs.length} Simulated</p>
         </div>
         <div className="flex items-center gap-2">
           <Link

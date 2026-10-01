@@ -2,15 +2,31 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { api, type Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
+import { DrawdownChart, EquityChart } from "@/components/Charts";
 import { loadPaper, stopPaper, type PaperPosition } from "@/lib/desk";
 import { n, pct, shortDate } from "@/lib/format";
 
+type Point = { t: string; equity: number; drawdown: number };
+
 export default function PortfolioPage() {
   const [book, setBook] = useState<PaperPosition[]>([]);
+  const [curve, setCurve] = useState<Point[]>([]);
 
   useEffect(() => {
-    setBook(loadPaper());
+    const positions = loadPaper();
+    setBook(positions);
+    if (!positions.length) {
+      setCurve([]);
+      return;
+    }
+    Promise.all(positions.map((p) => api<Run>(`/runs/${p.runId}`).catch(() => null))).then((runs) => {
+      const series = runs
+        .map((r) => (Array.isArray(r?.results?.equity) ? (r.results.equity as Point[]) : []))
+        .filter((s) => s.length > 0);
+      setCurve(combineEquity(series));
+    });
   }, []);
 
   const totals = useMemo(() => {
@@ -21,7 +37,9 @@ export default function PortfolioPage() {
   }, [book]);
 
   function remove(runId: string) {
-    setBook(stopPaper(runId));
+    const next = stopPaper(runId);
+    setBook(next);
+    if (!next.length) setCurve([]);
   }
 
   return (
@@ -42,8 +60,27 @@ export default function PortfolioPage() {
         <Stat label="Sum of backtest returns" value={book.length ? pct(totals.ret) : "—"} />
         <Stat label="Sum of recorded P&L" value={book.length ? n(totals.pnl) : "—"} />
       </div>
+
+      <section className="mt-8 grid gap-8 md:grid-cols-2">
+        <div className="border border-line p-3">
+          <h2 className="mb-2 text-sm">Total portfolio</h2>
+          {curve.length ? (
+            <EquityChart data={curve} />
+          ) : (
+            <EmptyChart label="Deploy a strategy to plot the book." />
+          )}
+        </div>
+        <div className="border border-line p-3">
+          <h2 className="mb-2 text-sm">Underwater drawdown</h2>
+          {curve.length ? (
+            <DrawdownChart data={curve} />
+          ) : (
+            <EmptyChart label="Drawdown appears once a paper book has a recorded equity curve." />
+          )}
+        </div>
+      </section>
       <p className="mt-3 text-xs text-mute">
-        Paper only. Figures are the strategy’s recorded backtest, not a live mark.
+        Paper only. The curve sums recorded backtest equity. It is not a live mark.
       </p>
 
       {book.length === 0 ? (
@@ -100,4 +137,29 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div className="mt-1 font-mono text-sm">{value}</div>
     </div>
   );
+}
+
+function EmptyChart({ label }: { label: string }) {
+  return <div className="flex h-48 items-center justify-center text-sm text-mute">{label}</div>;
+}
+
+function combineEquity(series: Point[][]): Point[] {
+  if (!series.length) return [];
+  const n = Math.max(...series.map((s) => s.length));
+  const out: Point[] = [];
+  let peak = Number.NEGATIVE_INFINITY;
+  for (let i = 0; i < n; i++) {
+    let equity = 0;
+    let t = String(i);
+    for (const s of series) {
+      const p = s[Math.min(i, s.length - 1)];
+      if (!p || typeof p.equity !== "number") continue;
+      equity += p.equity;
+      if (p.t) t = p.t;
+    }
+    peak = Math.max(peak, equity);
+    const drawdown = peak !== 0 && Number.isFinite(peak) ? (equity - peak) / peak : 0;
+    out.push({ t, equity, drawdown });
+  }
+  return out;
 }

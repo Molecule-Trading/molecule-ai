@@ -101,14 +101,14 @@ export default function RunDetailPage() {
           <section>
             <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Backtest results</h2>
             <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
-              <Stat label="Net P&L" value={n(a.net_pnl)} />
-              <Stat label="Return" value={pct(a.total_return)} />
-              <Stat label="Sharpe" value={n(a.sharpe)} />
-              <Stat label="Sortino" value={n(a.sortino)} />
-              <Stat label="Max DD" value={pct(a.max_drawdown)} />
-              <Stat label="Win rate" value={pct(a.win_rate)} />
-              <Stat label="Trades" value={String(a.trade_count)} />
-              <Stat label="End equity" value={n(a.ending_equity)} />
+              <Stat label="Net P&L" value={money(a.net_pnl)} tone={toneOf(a.net_pnl)} />
+              <Stat label="Return" value={pct2(a.total_return)} tone={toneOf(a.total_return)} />
+              <Stat label="Sharpe" value={n2(a.sharpe)} tone={toneOf(a.sharpe)} />
+              <Stat label="Sortino" value={n2(a.sortino)} tone={toneOf(a.sortino)} />
+              <Stat label="Max DD" value={pct2(a.max_drawdown)} tone={a.max_drawdown ? "down" : undefined} />
+              <Stat label="Win rate" value={pct2(a.win_rate)} />
+              <Stat label="Trades" value={a.trade_count == null ? "—" : String(a.trade_count)} />
+              <Stat label="End equity" value={money(a.ending_equity)} />
             </div>
           </section>
         )}
@@ -185,20 +185,33 @@ export default function RunDetailPage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) {
+  const color = tone === "up" ? "text-emerald-400" : tone === "down" ? "text-red-400" : "text-text";
   return (
     <div className="bg-ink-900 px-3 py-3">
       <div className="text-[11px] uppercase tracking-wide text-mute">{label}</div>
-      <div className="mt-1 font-mono text-sm">{value}</div>
+      <div className={`mt-1 font-mono text-sm ${color}`}>{value}</div>
     </div>
   );
 }
 
-function n(v: number | null | undefined) {
-  if (v === null || v === undefined) return "—";
-  return Number(v).toFixed(4);
+function n2(v: number | null | undefined) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return "—";
+  return Number(v).toFixed(2);
 }
-function pct(v: number | null | undefined) {
-  if (v === null || v === undefined) return "—";
-  return `${(Number(v) * 100).toFixed(2)}%`;
+function money(v: number | null | undefined) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return "—";
+  const n = Number(v);
+  const sign = n > 0 ? "+" : "";
+  return `${sign}${n.toFixed(2)}`;
+}
+function pct2(v: number | null | undefined) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return "—";
+  const x = Number(v) * 100;
+  const sign = x > 0 ? "+" : "";
+  return `${sign}${x.toFixed(2)}%`;
+}
+function toneOf(v: number | null | undefined): "up" | "down" | undefined {
+  if (v === null || v === undefined || Number.isNaN(Number(v)) || Number(v) === 0) return undefined;
+  return Number(v) > 0 ? "up" : "down";
 }

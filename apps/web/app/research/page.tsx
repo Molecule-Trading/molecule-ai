@@ -8,6 +8,16 @@ import { loadProfile, titleFromHypothesis, upsertChat, type Chat } from "@/lib/d
 
 type Attachment = { name: string; size: number };
 
+type SpeechRec = {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start: () => void;
+  onresult: ((ev: { results?: { 0?: { 0?: { transcript?: string } } } }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+};
+
 export default function ResearchPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -17,6 +27,7 @@ export default function ResearchPage() {
   const [name, setName] = useState("");
   const [files, setFiles] = useState<Attachment[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [listening, setListening] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -34,6 +45,31 @@ export default function ResearchPage() {
     const next = Array.from(list).map((f) => ({ name: f.name, size: f.size }));
     setFiles((prev) => [...prev, ...next].slice(0, 6));
     if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function dictate() {
+    const w = window as unknown as {
+      SpeechRecognition?: new () => SpeechRec;
+      webkitSpeechRecognition?: new () => SpeechRec;
+    };
+    const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
+    if (!Ctor) {
+      setError("Voice input is not available in this browser.");
+      return;
+    }
+    const rec = new Ctor();
+    rec.lang = "en-US";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setListening(true);
+    setError(null);
+    rec.onresult = (ev) => {
+      const said = ev.results?.[0]?.[0]?.transcript?.trim();
+      if (said) setText((prev) => (prev.trim() ? `${prev.trim()} ${said}` : said));
+    };
+    rec.onerror = () => setError("Voice input stopped.");
+    rec.onend = () => setListening(false);
+    rec.start();
   }
 
   async function submit() {
@@ -98,14 +134,29 @@ export default function ResearchPage() {
             </div>
           )}
           <div className="mt-2 flex items-center justify-between gap-2 px-1">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-ink-950 px-3 text-xs text-mute hover:text-text"
-            >
-              <Paperclip />
-              Attach
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-ink-950 px-3 text-xs text-mute hover:text-text"
+              >
+                <Paperclip />
+                Attach
+              </button>
+              <button
+                type="button"
+                onClick={dictate}
+                className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs ${
+                  listening
+                    ? "border-red-400 text-red-300"
+                    : "border-line bg-ink-950 text-mute hover:text-text"
+                }`}
+                aria-pressed={listening}
+              >
+                <Mic />
+                {listening ? "Listening" : "Voice"}
+              </button>
+            </div>
             <input
               ref={fileRef}
               type="file"
@@ -114,7 +165,7 @@ export default function ResearchPage() {
               onChange={(e) => onFiles(e.target.files)}
             />
             <div className="flex items-center gap-3">
-              <span className="text-xs text-mute">molecule 1.0</span>
+              <span className="rounded-md border border-line px-2 py-1 text-xs text-mute">molecule 1.0</span>
               <button
                 type="button"
                 onClick={submit}
@@ -143,6 +194,15 @@ function Paperclip() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function Mic() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M6 11a6 6 0 0012 0M12 17v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
