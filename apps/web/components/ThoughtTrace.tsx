@@ -25,8 +25,8 @@ export function ThoughtTrace() {
   }, []);
 
   return (
-    <div className="hero-in hidden w-full self-stretch lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
-      <ol className="flex h-full flex-col justify-start gap-0 pt-2">
+    <div className="hero-in hidden w-full lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
+      <ol className="flex flex-col">
         {LINES.map((line, i) => {
           const on = i < n;
           const current = i === n - 1;

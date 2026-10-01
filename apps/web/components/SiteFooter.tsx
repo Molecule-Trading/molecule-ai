@@ -4,24 +4,24 @@ import { Wordmark } from "@/components/Wordmark";
 export function SiteFooter() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8">
-        <div className="flex items-center gap-5">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-6 px-5 md:px-8">
+        <div className="flex shrink-0 items-center gap-4">
           <Wordmark className="h-7 w-auto" />
           <a href="https://x.com/chrislernunes" aria-label="X" className="text-mute transition-colors hover:text-text">
             <XIcon />
           </a>
-        </div>
-        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-mute" aria-label="Legal">
-          <Link href="/terms" className="transition-colors hover:text-text">
-            Terms of Service
-          </Link>
-          <Link href="/privacy" className="transition-colors hover:text-text">
-            Privacy Policy
-          </Link>
-          <span>Copyright © {new Date().getFullYear()} MoleculeAI. All rights reserved.</span>
           <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="text-mute transition-colors hover:text-text">
             <Mail />
           </a>
+        </div>
+        <nav className="flex items-center gap-x-6 text-sm text-mute" aria-label="Legal">
+          <Link href="/terms" className="transition-colors hover:text-text">
+            Terms
+          </Link>
+          <Link href="/privacy" className="transition-colors hover:text-text">
+            Privacy
+          </Link>
+          <span className="hidden sm:inline">© {new Date().getFullYear()} MoleculeAI</span>
         </nav>
       </div>
     </footer>

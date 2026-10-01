@@ -133,7 +133,7 @@ export default function Home() {
         <section className="relative overflow-hidden">
           <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
           <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-12 px-5 pb-16 pt-16 md:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 lg:pb-20">
+          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-16 md:px-8 lg:grid-cols-2 lg:gap-20 lg:pb-20">
             <div>
               <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
                 MoleculeAI
@@ -159,7 +159,7 @@ export default function Home() {
         </section>
 
         <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-2 md:px-8 md:pb-20">
+          <div className="mx-auto w-full max-w-6xl px-5 pb-10 pt-2 md:px-8 md:pb-20">
             <StrategyThread />
           </div>
         </section>
