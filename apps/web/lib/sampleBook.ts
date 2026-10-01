@@ -202,8 +202,9 @@ export function splitOf(bars: Bar[]) {
   const left = bars.slice(0, cut);
   const right = bars.slice(cut);
   const at = left[left.length - 1]?.t ?? bars[0]?.t ?? "";
+  const end = bars[bars.length - 1]?.t ?? "";
   const leftClosed = BOOK.closed.filter((c) => c.t <= at && c.t >= (bars[0]?.t ?? "")).map((c) => c.pnl);
-  const rightClosed = BOOK.closed.filter((c) => c.t > at).map((c) => c.pnl);
+  const rightClosed = BOOK.closed.filter((c) => c.t > at && c.t <= end).map((c) => c.pnl);
   return {
     at,
     inn: metricsOf(left.map((b) => b.equity), leftClosed),
@@ -225,7 +226,7 @@ export function quote(span: Span, feePct = 0.1, slipPct = 0.05) {
   const bars: Bar[] = [];
   const benchBars: { t: string; bench: number }[] = [];
   const trades: SampleTrade[] = [];
-  const closed: number[] = [];
+  const closed: { t: string; pnl: number }[] = [];
   const rets: number[] = [];
   const vols: number[] = [];
   let fills = 0;
@@ -233,7 +234,7 @@ export function quote(span: Span, feePct = 0.1, slipPct = 0.05) {
     const drag = d.turn ? cost : 0;
     const r = d.pos * d.asset - drag;
     if (d.turn) {
-      if (d.pos === 0) closed.push(capital - entry);
+      if (d.pos === 0) closed.push({ t: d.t, pnl: capital - entry });
       fills += 1;
       trades.push({
         trade_id: `T${String(fills).padStart(5, "0")}`,
@@ -260,8 +261,91 @@ export function quote(span: Span, feePct = 0.1, slipPct = 0.05) {
     trades,
     rets,
     vols,
-    metrics: metricsOf(bars.map((b) => b.equity), closed, gross),
+    closed,
+    metrics: metricsOf(bars.map((b) => b.equity), closed.map((c) => c.pnl), gross),
   };
+}
+
+export function clip(
+  bars: Bar[],
+  trades: SampleTrade[],
+  closed: { t: string; pnl: number }[],
+  from?: string | null,
+  to?: string | null,
+) {
+  const lo = from || bars[0]?.t || "";
+  const hi = to || bars[bars.length - 1]?.t || "";
+  const next = bars.filter((b) => b.t >= lo && b.t <= hi);
+  const fills = trades.filter((t) => t.fill_ts >= lo && t.fill_ts <= hi);
+  const done = closed.filter((c) => c.t >= lo && c.t <= hi).map((c) => c.pnl);
+  const rets: number[] = [];
+  for (let i = 1; i < next.length; i++) rets.push(next[i].equity / next[i - 1].equity - 1);
+  const vols: number[] = [];
+  for (let i = 20; i <= rets.length; i++) vols.push(stdev(rets.slice(i - 20, i)) * Math.sqrt(252));
+  const grossEnd = next.length ? next[0].equity + (next[next.length - 1].equity - next[0].equity) : undefined;
+  return { bars: next, trades: fills, rets, vols, metrics: metricsOf(next.map((b) => b.equity), done, grossEnd) };
+}
+
+export type YearRow = {
+  year: string;
+  months: (number | null)[];
+  total: number;
+  maxDd: number;
+  ddDays: number;
+  ddFrom: string;
+  ddTo: string;
+  ratio: number | null;
+};
+
+export function yearRows(bars: Bar[]): YearRow[] {
+  if (bars.length < 2) return [];
+  const years = [...new Set(bars.map((b) => b.t.slice(0, 4)))];
+  return years.map((year) => {
+    const first = bars.findIndex((b) => b.t.startsWith(year));
+    const last = (() => {
+      for (let i = bars.length - 1; i >= 0; i--) if (bars[i].t.startsWith(year)) return i;
+      return first;
+    })();
+    const base = Math.max(0, first - 1);
+    const slice = bars.slice(base, last + 1);
+    const months: (number | null)[] = Array(12).fill(null);
+    for (let i = 1; i < slice.length; i++) {
+      if (!slice[i].t.startsWith(year)) continue;
+      const m = Number(slice[i].t.slice(5, 7)) - 1;
+      const d = slice[i].equity - slice[i - 1].equity;
+      months[m] = (months[m] || 0) + d;
+    }
+    let peak = slice[0].equity;
+    let peakAt = slice[0].t;
+    let maxDd = 0;
+    let ddFrom = slice[0].t;
+    let ddTo = slice[0].t;
+    let ddDays = 0;
+    for (let i = 1; i < slice.length; i++) {
+      if (slice[i].equity >= peak) {
+        peak = slice[i].equity;
+        peakAt = slice[i].t;
+      }
+      const dd = slice[i].equity - peak;
+      if (dd < maxDd) {
+        maxDd = dd;
+        ddFrom = peakAt;
+        ddTo = slice[i].t;
+        ddDays = i - slice.findIndex((b) => b.t === peakAt);
+      }
+    }
+    const total = months.reduce<number>((s, v) => s + (v || 0), 0);
+    return {
+      year,
+      months,
+      total,
+      maxDd,
+      ddDays,
+      ddFrom,
+      ddTo,
+      ratio: maxDd < 0 ? total / Math.abs(maxDd) : null,
+    };
+  });
 }
 
 export function monthsOf(bars: Bar[]) {

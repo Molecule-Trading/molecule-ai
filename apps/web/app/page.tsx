@@ -127,25 +127,25 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main>
+      <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
           <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-16 md:px-8 lg:grid-cols-2 lg:gap-20 lg:pb-20">
+          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center gap-8 px-6 pb-10 pt-10 md:px-10 lg:grid-cols-2 lg:gap-10">
             <div>
               <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
                 MoleculeAI
               </p>
               <h1
-                className="hero-in mt-5 max-w-xl font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-6xl lg:text-7xl"
+                className="hero-in mt-5 max-w-3xl font-serif text-6xl font-medium leading-[0.98] tracking-tight md:text-7xl lg:text-8xl"
                 style={{ animationDelay: "120ms" }}
               >
                 A desk for the hypothesis, then the book.
               </h1>
               <p
-                className="hero-in mt-6 max-w-md text-base leading-relaxed text-mute md:text-lg"
+                className="hero-in mt-6 max-w-xl text-lg leading-relaxed text-mute md:text-xl"
                 style={{ animationDelay: "220ms" }}
               >
                 Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
@@ -160,7 +160,7 @@ export default function Home() {
 
         <section id="solutions" className="scroll-mt-20 mx-auto w-full max-w-6xl px-5 pb-8 pt-10 md:px-8">
           <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solutions</p>
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solution</p>
             <h2 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
               Anyone can trade
             </h2>

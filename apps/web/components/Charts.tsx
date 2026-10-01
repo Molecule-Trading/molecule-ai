@@ -65,12 +65,20 @@ export function EquityChart({
 }) {
   const days = spanDays(data);
   const start = data[0]?.equity || 1;
+  const bench0 = data[0]?.bench || start;
   const up = (data[data.length - 1]?.equity || 0) >= start;
-  const series = data.map((d) => ({
-    ...d,
-    y: scale === "pct" ? (d.equity / start - 1) * 100 : d.equity,
-    b: d.bench == null ? undefined : scale === "pct" ? (d.bench / (data[0].bench || start) - 1) * 100 : d.bench,
-  }));
+  const series = data.map((d) => {
+    const y = scale === "pct" ? (d.equity / start - 1) * 100 : d.equity;
+    const b = d.bench == null ? undefined : scale === "pct" ? (d.bench / bench0 - 1) * 100 : d.bench;
+    return { t: d.t, y, b };
+  });
+  const nums = series.flatMap((d) => [d.y, d.b].filter((n): n is number => typeof n === "number" && Number.isFinite(n)));
+  const lo = Math.min(...nums);
+  const hi = Math.max(...nums);
+  const pad = Math.max((hi - lo) * 0.08, Math.abs(hi) * 0.02, 0.5);
+  const logOk = scale === "log" && lo > 0;
+  const domain: [number, number] = logOk ? [lo * 0.985, hi * 1.015] : [lo - pad, hi + pad];
+  const fmt = (v: number) => (scale === "pct" ? `${v.toFixed(Math.abs(v) < 10 ? 1 : 0)}%` : money(v));
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -89,14 +97,23 @@ export function EquityChart({
             width={72}
             axisLine={false}
             tickLine={false}
-            scale={scale === "log" ? "log" : "auto"}
-            domain={scale === "log" ? ["auto", "auto"] : ["auto", "auto"]}
-            tickFormatter={(v) => (scale === "pct" ? `${Number(v).toFixed(0)}%` : money(Number(v)))}
+            scale={logOk ? "log" : "auto"}
+            domain={domain}
+            allowDataOverflow
+            tickFormatter={(v) => fmt(Number(v))}
           />
-          <Tooltip contentStyle={TIP} labelFormatter={(v) => String(v)} formatter={(v, name) => [scale === "pct" ? `${Number(v).toFixed(2)}%` : money(Number(v)), name === "b" ? "Benchmark" : "Book"]} />
+          <Tooltip
+            contentStyle={TIP}
+            labelFormatter={(v) => String(v).slice(0, 10)}
+            formatter={(v, name) => [fmt(Number(v)), name === "b" ? "Benchmark" : "Book"]}
+          />
           {splitAt && <ReferenceLine x={splitAt} stroke="#f87171" strokeDasharray="3 3" />}
-          <Line type="monotone" dataKey="b" stroke="#6f7782" dot={false} strokeWidth={1} isAnimationActive animationDuration={600} />
-          <Area type="monotone" dataKey="y" stroke={up ? "#34d399" : "#f87171"} strokeWidth={1.7} fill="url(#eqFill)" isAnimationActive animationDuration={700} />
+          <Line type="monotone" dataKey="b" stroke="#6f7782" dot={false} strokeWidth={1.1} isAnimationActive={false} />
+          {logOk ? (
+            <Line type="monotone" dataKey="y" stroke={up ? "#34d399" : "#f87171"} dot={false} strokeWidth={1.7} isAnimationActive={false} />
+          ) : (
+            <Area type="monotone" dataKey="y" stroke={up ? "#34d399" : "#f87171"} strokeWidth={1.7} fill="url(#eqFill)" baseValue={scale === "pct" ? 0 : lo} isAnimationActive={false} />
+          )}
         </ComposedChart>
       </ResponsiveContainer>
     </div>

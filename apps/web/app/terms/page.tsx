@@ -3,9 +3,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl px-5 py-16 md:px-8">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-16 md:px-8">
         <h1 className="font-serif text-4xl">Terms of Service</h1>
         <div className="mt-8 space-y-4 text-sm leading-relaxed text-mute">
           <p>MoleculeAI is a research desk. Strategies you deploy here run on a paper book. It is not a broker, and it does not place live orders.</p>

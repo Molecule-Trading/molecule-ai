@@ -7,9 +7,11 @@ import { windowOf } from "@/lib/sampleBook";
 const USER = "Buy when the twenty-day return is positive and volatility is falling.";
 
 const REPLY = [
-  { text: "Long only when both gates are on.", strong: "" },
-  { text: "Entry when the twenty-session return is above zero and realized volatility is below its own median.", strong: "Entry" },
-  { text: "Exit when either gate fails. Costs stay on the path.", strong: "Exit" },
+  { text: "Long only when both gates are on. No short book, no override.", strong: "" },
+  { text: "Entry is the close, and only if the twenty-session return is above zero and realized volatility is under its own 60-session median.", strong: "Entry" },
+  { text: "Exit the same session either gate fails. The position does not carry on discretion.", strong: "Exit" },
+  { text: "Fees are 10 bps and slippage is 5 bps, charged on the turn. Holding a name does not pay the fee again.", strong: "" },
+  { text: "The path is marked daily against a buy-and-hold benchmark. The first 70% of the window is in sample. The rest is out of sample.", strong: "" },
 ];
 
 const view = windowOf("MAX");
@@ -46,7 +48,8 @@ export function StrategyThread() {
         </div>
         <p className="font-mono text-[11px] text-mute">molecule 1.0</p>
       </div>
-      <div className="flex max-h-[640px] flex-col gap-5 overflow-y-auto px-5 py-6 md:px-8" aria-live="polite">
+      <div className="h-[36rem] overflow-y-auto px-5 py-6 md:px-8" aria-live="polite">
+        <div className="flex min-h-full flex-col gap-5">
         {phase >= 1 && (
           <div className="flex justify-end">
             <p className="thread-in max-w-xl rounded-2xl rounded-br-md bg-ink-800 px-4 py-3 text-sm leading-relaxed text-text">
@@ -89,6 +92,7 @@ export function StrategyThread() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

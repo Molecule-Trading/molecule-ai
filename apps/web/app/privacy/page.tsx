@@ -3,9 +3,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-2xl px-5 py-16 md:px-8">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-16 md:px-8">
         <h1 className="font-serif text-4xl">Privacy Policy</h1>
         <div className="mt-8 space-y-4 text-sm leading-relaxed text-mute">
           <p>Sign-in, the paper book, and saved chats stay in this browser. MoleculeAI does not send that desk state to a server of ours.</p>

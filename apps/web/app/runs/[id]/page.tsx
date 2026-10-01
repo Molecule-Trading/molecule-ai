@@ -8,10 +8,10 @@ import { PageShell } from "@/components/PageShell";
 import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
 import { deployPaper, isPaper, stopPaper } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
-import { fanOf, histOf, monthsOf, quote, splitOf, type Span } from "@/lib/sampleBook";
+import { clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
 
 const SPANS: Span[] = ["1Y", "3Y", "5Y", "MAX"];
-const MONTHS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +22,8 @@ export default function RunDetailPage() {
   const [scale, setScale] = useState<"equity" | "pct" | "log">("equity");
   const [fee, setFee] = useState(0.1);
   const [slip, setSlip] = useState(0.05);
+  const [from, setFrom] = useState<string | null>(null);
+  const [to, setTo] = useState<string | null>(null);
   const [cal, setCal] = useState(false);
 
   useEffect(() => {
@@ -29,13 +31,15 @@ export default function RunDetailPage() {
     setPaper(isPaper(id));
   }, [id]);
 
-  const view = useMemo(() => quote(span, fee, slip), [span, fee, slip]);
+  const full = useMemo(() => quote("MAX", fee, slip), [fee, slip]);
+  const view = useMemo(() => clip(full.bars, full.trades, full.closed, from, to), [full, from, to]);
   const split = useMemo(() => splitOf(view.bars), [view.bars]);
   const fan = useMemo(() => fanOf(view.bars), [view.bars]);
-  const heat = useMemo(() => monthsOf(view.bars), [view.bars]);
+  const years = useMemo(() => yearRows(view.bars), [view.bars]);
   const dist = useMemo(() => histOf(view.rets), [view.rets]);
   const volDist = useMemo(() => histOf(view.vols), [view.vols]);
   const a = view.metrics;
+  const script = run ? strategyTitle(run) : "Book";
 
   function togglePaper() {
     if (!run) return;
@@ -75,13 +79,27 @@ export default function RunDetailPage() {
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex flex-wrap items-center gap-3">
           <button type="button" onClick={() => setCal((v) => !v)} className="rounded-full border border-line px-3 py-1.5 text-xs text-mute hover:text-text">
-            {view.bars[0]?.t} — {view.bars[view.bars.length - 1]?.t}
+            {(from || full.bars[0]?.t)} — {(to || full.bars[full.bars.length - 1]?.t)}
           </button>
+          {cal && (
+            <RangePopover
+              min={full.bars[0]?.t || ""}
+              max={full.bars[full.bars.length - 1]?.t || ""}
+              from={from || full.bars[0]?.t || ""}
+              to={to || full.bars[full.bars.length - 1]?.t || ""}
+              onChange={(a, b) => {
+                setFrom(a);
+                setTo(b);
+                setSpan("MAX");
+              }}
+              onClose={() => setCal(false)}
+            />
+          )}
           <div className="inline-flex rounded-full border border-line bg-ink-900 p-1">
             {SPANS.map((s) => (
-              <button key={s} type="button" onClick={() => setSpan(s)} className={`rounded-full px-3 py-1 text-xs ${span === s ? "bg-text text-ink-950" : "text-mute"}`}>{s === "MAX" ? "Max" : s.toLowerCase()}</button>
+              <button key={s} type="button" onClick={() => { setSpan(s); const bars = full.bars; if (s === "MAX") { setFrom(null); setTo(null); return; } const n = s === "1Y" ? 252 : s === "3Y" ? 756 : 1260; const slice = bars.slice(-n); setFrom(slice[0]?.t || null); setTo(slice[slice.length - 1]?.t || null); }} className={`rounded-full px-3 py-1 text-xs ${span === s && !from ? "bg-text text-ink-950" : span === s ? "bg-text text-ink-950" : "text-mute"}`}>{s === "MAX" ? "Max" : s.toLowerCase()}</button>
             ))}
           </div>
           <div className="inline-flex rounded-full border border-line bg-ink-900 p-1">
@@ -96,7 +114,6 @@ export default function RunDetailPage() {
             <input type="number" step="0.01" value={slip} onChange={(e) => setSlip(Number(e.target.value))} className="w-16 rounded-md border border-line bg-ink-950 px-2 py-1 font-mono text-text" />
           </label>
         </div>
-        {cal && <Calendar start={view.bars[0]?.t} end={view.bars[view.bars.length - 1]?.t} onPick={(s) => { setSpan(s); setCal(false); }} />}
 
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4 xl:grid-cols-6">
           <Stat label="CAGR" value={pct2(a.cagr)} tone={toneOf(a.cagr)} />
@@ -113,7 +130,7 @@ export default function RunDetailPage() {
           <Stat label="Max loss" value={pct2(a.max_loss)} tone="down" />
         </section>
 
-        <section className="grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-2">
+        <section className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
           <Split title="In sample" m={split.inn} />
           <Split title="Out of sample" m={split.out} />
         </section>
@@ -124,43 +141,45 @@ export default function RunDetailPage() {
         <ChartCard title="Underwater Drawdown Plot" note="Days under the running peak">
           <DrawdownChart key={`dd-${span}-${fee}`} data={view.bars} height={220} />
         </ChartCard>
-        <div className="grid gap-4 xl:grid-cols-2">
-          <ChartCard title="Monte Carlo" note="48 paths. Dashed lines are the 10th and 90th. Solid is the median.">
-            <MonteCarloChart key={`mc-${span}-${fee}`} data={fan} height={280} />
-          </ChartCard>
+        <ChartCard title="Monte Carlo" note="48 paths. Dashed lines are the 10th and 90th. Solid is the median.">
+          <MonteCarloChart key={`mc-${from}-${to}-${fee}`} data={fan} height={280} />
+        </ChartCard>
+        <div className="grid gap-4 lg:grid-cols-2">
           <ChartCard title="Return distribution" note="Daily book returns">
-            <DistChart data={dist} label="Days" height={280} />
+            <DistChart key={`rd-${from}-${to}`} data={dist} label="Days" height={260} />
+          </ChartCard>
+          <ChartCard title="Volatility distribution" note="20-session realized volatility">
+            <DistChart key={`vd-${from}-${to}`} data={volDist} label="Sessions" height={260} />
           </ChartCard>
         </div>
-        <ChartCard title="Volatility distribution" note="20-session realized volatility">
-          <DistChart data={volDist} label="Sessions" height={220} />
-        </ChartCard>
 
         <section className="overflow-x-auto rounded-xl border border-line">
-          <div className="min-w-[720px] p-4">
-            <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Return by month</h2>
-            <div className="mt-3 grid grid-cols-[64px_repeat(12,1fr)] gap-1 text-[10px] text-mute">
-              <span />
-              {MONTHS.map((m) => <span key={m} className="text-center">{m}</span>)}
-              {heat.years.map((y) => (
-                <div key={y} className="contents">
-                  <span className="font-mono">{y}</span>
-                  {MONTHS.map((_, i) => {
-                    const v = heat.cell(y, i + 1);
-                    return <span key={i} title={v == null ? "" : pct2(v)} className="h-6 rounded-sm" style={{ background: heatColor(v) }} />;
-                  })}
-                </div>
+          <table className="w-full min-w-[980px] text-right text-xs">
+            <thead className="font-mono text-[10px] uppercase tracking-wide text-mute">
+              <tr>
+                <th className="px-3 py-2 text-left">Year</th>
+                {MONTHS.map((m) => <th key={m} className="px-2 py-2 font-medium">{m}</th>)}
+                <th className="px-2 py-2">Total</th>
+                <th className="px-2 py-2">Max drawdown</th>
+                <th className="px-2 py-2 text-left">Days for MDD</th>
+                <th className="px-3 py-2">R / MDD</th>
+              </tr>
+            </thead>
+            <tbody>
+              {years.map((row) => (
+                <tr key={row.year} className="border-t border-line font-mono">
+                  <td className="px-3 py-2 text-left text-mute">{row.year}</td>
+                  {row.months.map((v, i) => (
+                    <td key={i} className={`px-2 py-2 ${v == null || v === 0 ? "text-mute" : v > 0 ? "text-emerald-400" : "text-red-400"}`}>{v == null ? "—" : signed(v)}</td>
+                  ))}
+                  <td className={`px-2 py-2 ${row.total >= 0 ? "text-emerald-400" : "text-red-400"}`}>{signed(row.total)}</td>
+                  <td className="px-2 py-2 text-red-400">{signed(row.maxDd)}</td>
+                  <td className="px-2 py-2 text-left text-mute">{row.ddDays}d · {row.ddFrom.slice(5)} to {row.ddTo.slice(5)}</td>
+                  <td className={`px-3 py-2 ${row.ratio != null && row.ratio < 0 ? "text-red-400" : "text-text"}`}>{row.ratio == null ? "—" : row.ratio.toFixed(2)}</td>
+                </tr>
               ))}
-            </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-3">
-              {heat.yearStats.map((y) => (
-                <div key={y.year} className="rounded-lg border border-line px-3 py-2 text-xs">
-                  <div className="font-mono text-mute">{y.year}</div>
-                  <div className="mt-1">DD {pct2(y.dd)} · Sharpe {n2(y.sharpe)} · {y.days}d in drawdown</div>
-                </div>
-              ))}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </section>
 
         <section>
@@ -173,6 +192,7 @@ export default function RunDetailPage() {
               <thead className="sticky top-0 bg-ink-900 font-mono text-mute">
                 <tr>
                   <th className="px-3 py-2">Timestamp</th>
+                  <th className="px-3 py-2">Script</th>
                   <th className="px-3 py-2">Side</th>
                   <th className="px-3 py-2">Qty</th>
                   <th className="px-3 py-2">Fill price</th>
@@ -184,6 +204,7 @@ export default function RunDetailPage() {
                 {view.trades.map((t) => (
                   <tr key={t.trade_id} className="border-t border-line font-mono">
                     <td className="px-3 py-2 text-mute">{t.fill_ts}</td>
+                    <td className="px-3 py-2 text-mute">{script}</td>
                     <td className={`px-3 py-2 ${t.side === "BUY" ? "text-emerald-400" : "text-red-400"}`}>{t.side}</td>
                     <td className="px-3 py-2">{t.quantity}</td>
                     <td className="px-3 py-2">{t.price.toFixed(2)}</td>
@@ -200,24 +221,77 @@ export default function RunDetailPage() {
   );
 }
 
-function Calendar({ start, end, onPick }: { start?: string; end?: string; onPick: (s: Span) => void }) {
+function RangePopover({
+  min,
+  max,
+  from,
+  to,
+  onChange,
+  onClose,
+}: {
+  min: string;
+  max: string;
+  from: string;
+  to: string;
+  onChange: (from: string, to: string) => void;
+  onClose: () => void;
+}) {
+  const [cursor, setCursor] = useState(from.slice(0, 7));
+  const [anchor, setAnchor] = useState<string | null>(null);
+  const [y, m] = cursor.split("-").map(Number);
+  const first = new Date(Date.UTC(y, m - 1, 1));
+  const startPad = first.getUTCDay();
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const cells = [...Array(startPad).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)];
+
+  function pick(day: number) {
+    const iso = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    if (iso < min || iso > max) return;
+    if (!anchor) {
+      setAnchor(iso);
+      return;
+    }
+    const a = anchor < iso ? anchor : iso;
+    const b = anchor < iso ? iso : anchor;
+    onChange(a, b);
+    setAnchor(null);
+    onClose();
+  }
+
+  function shift(dir: number) {
+    const d = new Date(Date.UTC(y, m - 1 + dir, 1));
+    setCursor(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
+  }
+
   return (
-    <div className="max-w-md rounded-xl border border-line bg-ink-900 p-4">
-      <p className="text-sm">{start} to {end}</p>
-      <p className="mt-1 text-xs text-mute">Window is the recorded sample. Pick a span.</p>
-      <div className="mt-3 flex gap-2">
-        {SPANS.map((s) => (
-          <button key={s} type="button" onClick={() => onPick(s)} className="rounded-full border border-line px-3 py-1 text-xs text-mute hover:text-text">{s === "MAX" ? "Max" : s.toLowerCase()}</button>
-        ))}
+    <div className="absolute left-0 top-10 z-30 w-[280px] rounded-xl border border-line bg-ink-950 p-3 shadow-2xl">
+      <div className="flex items-center justify-between text-sm">
+        <button type="button" onClick={() => shift(-1)} className="px-2 text-mute hover:text-text">‹</button>
+        <span>{first.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</span>
+        <button type="button" onClick={() => shift(1)} className="px-2 text-mute hover:text-text">›</button>
       </div>
+      <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[11px] text-mute">
+        {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => <span key={i}>{d}</span>)}
+        {cells.map((day, i) => {
+          if (!day) return <span key={i} />;
+          const iso = `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const off = iso < min || iso > max;
+          const on = iso >= from && iso <= to;
+          return (
+            <button key={iso} type="button" disabled={off} onClick={() => pick(day)} className={`h-7 rounded-md ${off ? "text-line" : on ? "bg-text text-ink-950" : "hover:bg-ink-800"}`}>
+              {day}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-2 text-[11px] text-mute">Select a start date, then an end date.</p>
     </div>
   );
 }
 
-function heatColor(v?: number) {
-  if (v == null) return "#1a1d22";
-  const x = Math.max(-0.08, Math.min(0.08, v));
-  return x >= 0 ? `rgba(52,211,153,${0.18 + x * 8})` : `rgba(248,113,113,${0.18 + Math.abs(x) * 8})`;
+function signed(v: number) {
+  const n = Math.round(v);
+  return `${n > 0 ? "" : ""}${n.toLocaleString("en-US")}`;
 }
 
 function ChartCard({ title, note, children }: { title: string; note: string; children: React.ReactNode }) {

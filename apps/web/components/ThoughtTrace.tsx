@@ -43,7 +43,7 @@ export function ThoughtTrace() {
                 )}
               </span>
               <p
-                className={`pt-0.5 text-[15px] leading-none transition-all duration-500 ${
+                className={`pt-1 text-lg leading-snug transition-all duration-500 ${
                   on ? "text-text opacity-100" : "text-mute opacity-25"
                 }`}
               >
