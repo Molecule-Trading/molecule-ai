@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { api, Run } from "@/lib/api";
-import { AppChrome } from "@/components/AppChrome";
+import { PageShell } from "@/components/PageShell";
 import { Stages } from "@/components/Stages";
 import { DrawdownChart, EquityChart } from "@/components/Charts";
 import { strategyTitle } from "@/lib/format";
@@ -20,154 +20,150 @@ export default function RunDetailPage() {
   }, [id]);
 
   if (err) {
-    return <div className="px-5 py-8 text-sm text-red-400">{err}</div>;
+    return (
+      <PageShell>
+        <div className="text-sm text-red-400">{err}</div>
+      </PageShell>
+    );
   }
   if (!run) {
-    return <div className="px-5 py-8 text-sm text-mute">Loading strategy…</div>;
+    return (
+      <PageShell>
+        <div className="text-sm text-mute">Loading strategy…</div>
+      </PageShell>
+    );
   }
 
   const a = run.results?.analytics;
   const equity = run.results?.equity || [];
   const trades = run.results?.trades || [];
   const assumptions = run.results?.assumptions || {};
-  const quality = run.results?.data_quality;
 
   return (
-    <div className="min-h-screen">
-      <AppChrome />
-      <div className="mx-auto max-w-6xl space-y-10 px-5 py-8">
-        <div>
-          <div className="font-mono text-xs text-mute">{run.id}</div>
-          <h1 className="mt-1 font-serif text-3xl font-medium">{strategyTitle(run)}</h1>
-          <p className="mt-2 max-w-3xl text-sm text-mute">{run.hypothesis}</p>
-          <div className="mt-2 font-mono text-xs text-mute">
-            {run.status} · engine {run.engine_version || "—"} · {run.data_period || "—"}
-            {run.synthetic || run.recorded_fixture ? " · recorded sample" : ""}
-          </div>
-          {(run.recorded_fixture || run.results?.recorded_fixture || run.synthetic) && (
-            <p className="mt-3 max-w-2xl text-sm text-mute">
-              Recorded by the Python engine on shipped sample data. This page load did not re-run the
-              backtest and did not ask a model for the numbers.
-            </p>
-          )}
-          {run.status === "BLOCKED" && run.recorded_run_id && (
-            <p className="mt-3 text-sm">
-              <a className="underline" href={`/runs/${run.recorded_run_id}`}>
-                Open the recorded sample
-              </a>
-            </p>
-          )}
+    <PageShell>
+      <div className="space-y-10">
+      <div>
+        <div className="font-mono text-xs text-mute">{run.id}</div>
+        <h1 className="mt-1 font-serif text-3xl font-medium">{strategyTitle(run)}</h1>
+        <p className="mt-2 max-w-3xl text-sm text-mute">{run.hypothesis}</p>
+        <div className="mt-2 font-mono text-xs text-mute">
+          {run.status} · engine {run.engine_version || "—"} · {run.data_period || "—"}
+          {run.synthetic || run.recorded_fixture ? " · recorded sample" : ""}
         </div>
-
-        <section className="grid gap-8 md:grid-cols-[220px_1fr]">
-          <Stages stages={run.stages} />
-          {run.error && <div className="text-sm text-red-400">{run.error}</div>}
-        </section>
-
-        {a && (
-          <section>
-            <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Backtest results</h2>
-            <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
-              <Stat label="Net P&L" value={n(a.net_pnl)} />
-              <Stat label="Return" value={pct(a.total_return)} />
-              <Stat label="Sharpe" value={n(a.sharpe)} />
-              <Stat label="Sortino" value={n(a.sortino)} />
-              <Stat label="Max DD" value={pct(a.max_drawdown)} />
-              <Stat label="Win rate" value={pct(a.win_rate)} />
-              <Stat label="Trades" value={String(a.trade_count)} />
-              <Stat label="End equity" value={n(a.ending_equity)} />
-            </div>
-          </section>
+        {(run.recorded_fixture || run.results?.recorded_fixture || run.synthetic) && (
+          <p className="mt-3 max-w-2xl text-sm text-mute">
+            Recorded by the Python engine on shipped sample data. This page load did not re-run the
+            backtest and did not ask a model for the numbers.
+          </p>
         )}
-
-        {equity.length > 0 && (
-          <section className="grid gap-8 md:grid-cols-2">
-            <div className="border border-line p-3">
-              <h3 className="mb-2 text-sm">Equity</h3>
-              <EquityChart data={equity} />
-            </div>
-            <div className="border border-line p-3">
-              <h3 className="mb-2 text-sm">Drawdown</h3>
-              <DrawdownChart data={equity} />
-            </div>
-          </section>
+        {run.status === "BLOCKED" && run.recorded_run_id && (
+          <p className="mt-3 text-sm">
+            <a className="underline" href={`/runs/${run.recorded_run_id}`}>
+              Open the recorded sample
+            </a>
+          </p>
         )}
-
-        <section>
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Trades</h2>
-          <div className="overflow-x-auto border border-line">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-ink-900 font-mono text-mute">
-                <tr>
-                  <th className="px-3 py-2">ID</th>
-                  <th className="px-3 py-2">Reason</th>
-                  <th className="px-3 py-2">Side</th>
-                  <th className="px-3 py-2">Outcome</th>
-                  <th className="px-3 py-2">Qty</th>
-                  <th className="px-3 py-2">Price</th>
-                  <th className="px-3 py-2">Fill</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trades.length === 0 && (
-                  <tr>
-                    <td className="px-3 py-6 text-mute" colSpan={7}>
-                      No fills. A blocked run has no engine trades.
-                    </td>
-                  </tr>
-                )}
-                {trades.map((t: any) => (
-                  <tr key={t.trade_id} className="border-t border-line font-mono">
-                    <td className="px-3 py-2">{t.trade_id}</td>
-                    <td className="px-3 py-2">{t.reason}</td>
-                    <td className="px-3 py-2">{t.side}</td>
-                    <td className="px-3 py-2">{t.outcome}</td>
-                    <td className="px-3 py-2">{Number(t.quantity).toFixed(2)}</td>
-                    <td className="px-3 py-2">{Number(t.price).toFixed(4)}</td>
-                    <td className="px-3 py-2">{String(t.fill_ts).slice(0, 19)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="grid gap-8 md:grid-cols-2">
-          <div>
-            <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Strategy</h2>
-            <pre className="overflow-auto border border-line bg-ink-900 p-3 text-xs">
-              {JSON.stringify(run.strategy_spec || run.results?.strategy, null, 2)}
-            </pre>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Assumptions</h2>
-              <dl className="grid grid-cols-2 gap-2 text-sm">
-                {Object.entries(assumptions).map(([k, v]) => (
-                  <div key={k} className="contents">
-                    <dt className="text-mute">{k}</dt>
-                    <dd className="font-mono">{String(v)}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-            <div>
-              <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Data quality</h2>
-              <pre className="overflow-auto border border-line bg-ink-900 p-3 text-xs">
-                {JSON.stringify(quality, null, 2)}
-              </pre>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Interpretation</h2>
-          <div className="border border-line bg-ink-900 p-4 text-sm leading-relaxed whitespace-pre-wrap">
-            {run.ai_analysis || "No model interpretation. Deterministic results only."}
-          </div>
-        </section>
       </div>
-    </div>
+
+      <section className="grid gap-8 md:grid-cols-[220px_1fr]">
+        <Stages stages={run.stages} />
+        {run.error && <div className="text-sm text-red-400">{run.error}</div>}
+      </section>
+
+      {a && (
+        <section>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">
+            Backtest results
+          </h2>
+          <div className="grid grid-cols-2 gap-px bg-line md:grid-cols-4">
+            <Stat label="Net P&L" value={n(a.net_pnl)} />
+            <Stat label="Return" value={pct(a.total_return)} />
+            <Stat label="Sharpe" value={n(a.sharpe)} />
+            <Stat label="Sortino" value={n(a.sortino)} />
+            <Stat label="Max DD" value={pct(a.max_drawdown)} />
+            <Stat label="Win rate" value={pct(a.win_rate)} />
+            <Stat label="Trades" value={String(a.trade_count)} />
+            <Stat label="End equity" value={n(a.ending_equity)} />
+          </div>
+        </section>
+      )}
+
+      {equity.length > 0 && (
+        <section className="grid gap-8 md:grid-cols-2">
+          <div className="border border-line p-3">
+            <h3 className="mb-2 text-sm">Equity</h3>
+            <EquityChart data={equity} />
+          </div>
+          <div className="border border-line p-3">
+            <h3 className="mb-2 text-sm">Drawdown</h3>
+            <DrawdownChart data={equity} />
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Trades</h2>
+        <div className="overflow-x-auto border border-line">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-ink-900 font-mono text-mute">
+              <tr>
+                <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">Reason</th>
+                <th className="px-3 py-2">Side</th>
+                <th className="px-3 py-2">Outcome</th>
+                <th className="px-3 py-2">Qty</th>
+                <th className="px-3 py-2">Price</th>
+                <th className="px-3 py-2">Fill</th>
+              </tr>
+            </thead>
+            <tbody>
+              {trades.length === 0 && (
+                <tr>
+                  <td className="px-3 py-6 text-mute" colSpan={7}>
+                    No fills. A blocked run has no engine trades.
+                  </td>
+                </tr>
+              )}
+              {trades.map((t: any) => (
+                <tr key={t.trade_id} className="border-t border-line font-mono">
+                  <td className="px-3 py-2">{t.trade_id}</td>
+                  <td className="px-3 py-2">{t.reason}</td>
+                  <td className="px-3 py-2">{t.side}</td>
+                  <td className="px-3 py-2">{t.outcome}</td>
+                  <td className="px-3 py-2">{Number(t.quantity).toFixed(2)}</td>
+                  <td className="px-3 py-2">{Number(t.price).toFixed(4)}</td>
+                  <td className="px-3 py-2">{String(t.fill_ts).slice(0, 19)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {Object.entries(assumptions).some(([, v]) => v === null || ["string", "number", "boolean"].includes(typeof v)) && (
+        <section>
+          <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Assumptions</h2>
+          <dl className="grid grid-cols-2 gap-2 text-sm">
+            {Object.entries(assumptions)
+              .filter(([, v]) => v === null || ["string", "number", "boolean"].includes(typeof v))
+              .map(([k, v]) => (
+                <div key={k} className="contents">
+                  <dt className="text-mute">{k.replaceAll("_", " ")}</dt>
+                  <dd className="font-mono">{String(v)}</dd>
+                </div>
+              ))}
+          </dl>
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 font-mono text-xs uppercase tracking-wider text-mute">Grok analysis</h2>
+        <div className="border border-line bg-ink-900 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+          {run.ai_analysis || "No model interpretation. Deterministic results only."}
+        </div>
+      </section>
+      </div>
+    </PageShell>
   );
 }
 

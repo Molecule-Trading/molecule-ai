@@ -11,23 +11,28 @@ const LINKS = [
   { href: "/settings", label: "Settings" },
 ];
 
-export function AppChrome({ right }: { right?: React.ReactNode }) {
+export const frameClass = "mx-auto w-full max-w-6xl px-4 md:px-6";
+
+export function AppChrome() {
   const path = usePathname();
   return (
-    <div className="flex items-center justify-between gap-4 px-4 py-4 md:px-6">
+    <div className={`${frameClass} flex items-center justify-between gap-4 py-4`}>
       <Wordmark />
-      <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
-        <nav className="flex items-center gap-4 text-sm text-mute">
+      <div className="flex items-center gap-4 sm:gap-5">
+        <nav className="flex items-center gap-3 text-sm text-mute sm:gap-4">
           {LINKS.map((l) => {
             const on = path === l.href || path.startsWith(l.href + "/");
             return (
-              <Link key={l.href} href={l.href} className={on ? "text-text" : "hover:text-text"}>
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`whitespace-nowrap ${on ? "font-medium text-text" : "hover:text-text"}`}
+              >
                 {l.label}
               </Link>
             );
           })}
         </nav>
-        {right}
         <ThemeToggle />
       </div>
     </div>

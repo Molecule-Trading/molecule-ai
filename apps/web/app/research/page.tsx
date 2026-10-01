@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
-import { AppChrome } from "@/components/AppChrome";
-import { loadBrokers, loadProfile, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
+import { PageShell } from "@/components/PageShell";
+import { loadBrokers, loadProfile, saveBrokers, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
 
 export default function ResearchPage() {
   const router = useRouter();
@@ -14,6 +14,8 @@ export default function ResearchPage() {
   const [name, setName] = useState("");
   const [brokerage, setBrokerage] = useState("");
   const [brokers, setBrokers] = useState<{ id: string; name: string }[]>([]);
+  const [addingBroker, setAddingBroker] = useState(false);
+  const [brokerDraft, setBrokerDraft] = useState("");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -58,34 +60,59 @@ export default function ResearchPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <AppChrome />
-      <main className="flex flex-1 flex-col">
-        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-8">
-          <div className="mb-8 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-ink-900 font-mono text-xs text-mute">
-            {mounted && name ? name.slice(0, 1).toUpperCase() : "M"}
-          </div>
-          <h1 className="font-serif text-4xl font-medium tracking-tight md:text-5xl">
-            {mounted ? greeting : "Let’s start building"}
-          </h1>
-          <p className="mt-3 text-sm text-mute">Build, backtest, or explore a new trading idea.</p>
-          <div className="mt-8 rounded-2xl border border-line bg-ink-900 p-3">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
-              }}
-              rows={3}
-              placeholder="When headlines report a disruption to…"
-              className="w-full resize-none bg-transparent px-2 py-2 text-sm text-text outline-none placeholder:text-mute"
-            />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 px-1">
+    <PageShell center>
+      <div className="flex w-full max-w-2xl flex-1 flex-col justify-center py-8">
+        <h1 className="font-serif text-4xl font-medium tracking-tight md:text-5xl">
+          {mounted ? greeting : "Let’s start building"}
+        </h1>
+        <p className="mt-3 text-sm text-mute">Build, backtest, or explore a new trading idea.</p>
+        <div className="mt-8 rounded-2xl border border-line bg-ink-900 p-3">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
+            }}
+            rows={3}
+            placeholder="When headlines report a disruption to…"
+            className="w-full resize-none bg-transparent px-2 py-2 text-sm text-text outline-none placeholder:text-mute"
+          />
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 px-1">
+            {addingBroker ? (
+              <form
+                className="flex items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = brokerDraft.trim();
+                  if (!name) return;
+                  const next = [...brokers, { id: String(Date.now()), name }];
+                  setBrokers(next);
+                  saveBrokers(next.map((b) => ({ ...b, status: "linked" as const })));
+                  setBrokerage(name);
+                  setBrokerDraft("");
+                  setAddingBroker(false);
+                }}
+              >
+                <input
+                  autoFocus
+                  value={brokerDraft}
+                  onChange={(e) => setBrokerDraft(e.target.value)}
+                  placeholder="Brokerage name"
+                  className="rounded-full border border-line bg-ink-950 px-3 py-1.5 text-xs text-text outline-none"
+                />
+                <button type="submit" className="text-xs text-text">
+                  Link
+                </button>
+                <button type="button" onClick={() => setAddingBroker(false)} className="text-xs text-mute">
+                  Cancel
+                </button>
+              </form>
+            ) : (
               <select
                 value={brokerage}
                 onChange={(e) => {
                   if (e.target.value === "__add") {
-                    router.push("/settings?tab=brokerages");
+                    setAddingBroker(true);
                     return;
                   }
                   setBrokerage(e.target.value);
@@ -100,23 +127,23 @@ export default function ResearchPage() {
                 ))}
                 <option value="__add">Add brokerage…</option>
               </select>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-mute">molecule 1.0</span>
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={busy || text.trim().length < 8}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-text text-ink-950 disabled:opacity-40"
-                  aria-label="Run research"
-                >
-                  {busy ? "…" : "↑"}
-                </button>
-              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-mute">molecule 1.0</span>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={busy || text.trim().length < 8}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-text text-ink-950 disabled:opacity-40"
+                aria-label="Run research"
+              >
+                {busy ? "…" : "↑"}
+              </button>
             </div>
-            {error && <div className="px-2 pt-2 text-sm text-red-400">{error}</div>}
           </div>
+          {error && <div className="px-2 pt-2 text-sm text-red-400">{error}</div>}
         </div>
-      </main>
-    </div>
+      </div>
+    </PageShell>
   );
 }

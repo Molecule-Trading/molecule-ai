@@ -34,6 +34,13 @@ const PROFILE = "molecule.desk.profile";
 const BROKERS = "molecule.desk.brokers";
 const SAFETY = "molecule.desk.safety";
 
+export type DeskPlan = {
+  plan: "free" | "pro";
+  cycle: "monthly" | "yearly";
+};
+
+const PLAN = "molecule.desk.plan";
+
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -101,10 +108,19 @@ export function saveSafety(value: Safety) {
   write(SAFETY, value);
 }
 
+export function loadPlan(): DeskPlan {
+  return read<DeskPlan>(PLAN, { plan: "free", cycle: "monthly" });
+}
+
+export function savePlan(value: DeskPlan) {
+  write(PLAN, value);
+}
+
 export function signOutLocal() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(CHATS);
   window.localStorage.removeItem(PROFILE);
   window.localStorage.removeItem(BROKERS);
   window.localStorage.removeItem(SAFETY);
+  window.localStorage.removeItem(PLAN);
 }

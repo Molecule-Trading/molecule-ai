@@ -35,6 +35,7 @@ body {
 
 body {
   font-feature-settings: "ss01" 1;
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 button,
