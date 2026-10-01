@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader, StartLink } from "@/components/SiteHeader";
+import { StrategyThread } from "@/components/StrategyThread";
+import { ThoughtTrace } from "@/components/ThoughtTrace";
 
 const WHY = [
   {
@@ -22,28 +24,10 @@ const WHY = [
   },
 ];
 
-const PRODUCT = [
-  {
-    n: "01",
-    title: "Research",
-    body: "One field. Describe the idea in a sentence, attach a note, or say it out loud.",
-  },
-  {
-    n: "02",
-    title: "Simulate",
-    body: "Molecule builds the strategy and runs it on recorded history. The numbers come from the engine.",
-  },
-  {
-    n: "03",
-    title: "Paper",
-    body: "Deploy what holds up to the book. Watch it. Stop it when the idea is done.",
-  },
-];
-
 const FAQ = [
   {
-    q: "What is Molecule?",
-    a: "A research desk. You describe a trading idea in natural language. Molecule builds the strategy, simulates it, and lets you paper it.",
+    q: "What is MoleculeAI?",
+    a: "A research desk. You describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and lets you paper it.",
   },
   {
     q: "Do I need to write code?",
@@ -149,25 +133,34 @@ export default function Home() {
         <section className="relative overflow-hidden">
           <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
           <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col justify-end px-5 pb-20 pt-24 md:justify-center md:px-8 md:pb-28 md:pt-16">
-            <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
-              Molecule
-            </p>
-            <h1
-              className="hero-in mt-5 max-w-4xl font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-7xl lg:text-8xl"
-              style={{ animationDelay: "120ms" }}
-            >
-              A desk for the hypothesis, then the book.
-            </h1>
-            <p
-              className="hero-in mt-6 max-w-xl text-base leading-relaxed text-mute md:text-lg"
-              style={{ animationDelay: "220ms" }}
-            >
-              Describe a trading idea in natural language. MoleculeAi builds the strategy, simulates it, and tests it.
-            </p>
-            <div className="hero-in mt-8" style={{ animationDelay: "320ms" }}>
-              <StartLink />
+          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-12 px-5 pb-16 pt-16 md:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:gap-16 lg:pb-20">
+            <div>
+              <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
+                MoleculeAI
+              </p>
+              <h1
+                className="hero-in mt-5 max-w-xl font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-6xl lg:text-7xl"
+                style={{ animationDelay: "120ms" }}
+              >
+                A desk for the hypothesis, then the book.
+              </h1>
+              <p
+                className="hero-in mt-6 max-w-md text-base leading-relaxed text-mute md:text-lg"
+                style={{ animationDelay: "220ms" }}
+              >
+                Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
+              </p>
+              <div className="hero-in mt-8" style={{ animationDelay: "320ms" }}>
+                <StartLink />
+              </div>
             </div>
+            <ThoughtTrace />
+          </div>
+        </section>
+
+        <section id="product" className="scroll-mt-20">
+          <div className="mx-auto w-full max-w-3xl px-5 pb-8 pt-4 md:px-8 md:pb-16">
+            <StrategyThread />
           </div>
         </section>
 
@@ -195,28 +188,6 @@ export default function Home() {
                 </article>
               </Reveal>
             ))}
-          </div>
-        </section>
-
-        <section id="product" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-24 md:px-8 md:py-32">
-            <Reveal>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Product</p>
-              <h2 className="mt-5 max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight md:text-6xl">
-                From a sentence to a paper book.
-              </h2>
-            </Reveal>
-            <div className="mt-14 divide-y divide-line border-y border-line">
-              {PRODUCT.map((item, i) => (
-                <Reveal key={item.n} delay={i * 80}>
-                  <article className="grid gap-3 py-8 md:grid-cols-12 md:items-baseline md:gap-8">
-                    <span className="font-mono text-xs text-mute md:col-span-1">{item.n}</span>
-                    <h3 className="font-serif text-3xl md:col-span-4">{item.title}</h3>
-                    <p className="text-sm leading-relaxed text-mute md:col-span-7 md:text-base">{item.body}</p>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
           </div>
         </section>
 

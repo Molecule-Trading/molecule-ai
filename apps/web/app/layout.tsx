@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Molecule",
-  description: "Research and historical backtesting desk",
+  title: "MoleculeAI",
+  description: "Describe a trading idea. MoleculeAI builds the strategy, simulates it, and tests it.",
   icons: { icon: "/icon.svg" },
 };
 

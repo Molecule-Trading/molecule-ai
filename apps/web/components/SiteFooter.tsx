@@ -1,63 +1,52 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/Wordmark";
 
-const COLUMNS = [
-  {
-    title: "Product",
-    links: [
-      { href: "/#product", label: "Research" },
-      { href: "/#why", label: "Why Molecule" },
-      { href: "/pricing", label: "Pricing" },
-    ],
-  },
-  {
-    title: "Desk",
-    links: [
-      { href: "/login", label: "Get started" },
-      { href: "/#faq", label: "FAQ" },
-      { href: "/pricing", label: "Plans" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { href: "/login", label: "Sign in" },
-      { href: "/#faq", label: "Questions" },
-    ],
-  },
-];
-
 export function SiteFooter() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto grid w-full max-w-6xl gap-12 px-5 py-16 md:grid-cols-4 md:px-8">
-        <div>
-          <Wordmark />
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-mute">
-            Describe a trading idea. Molecule builds it, simulates it, and keeps the paper book in one place.
-          </p>
-        </div>
-        {COLUMNS.map((col) => (
-          <div key={col.title}>
-            <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-mute">{col.title}</p>
-            <ul className="mt-4 space-y-3">
-              {col.links.map((link) => (
-                <li key={col.title + link.label}>
-                  <Link href={link.href} className="text-sm text-mute transition-colors hover:text-text">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8">
+        <div className="flex items-center gap-5">
+          <Wordmark className="h-7 w-auto" />
+          <div className="flex items-center gap-3 text-mute">
+            <a
+              href="https://www.linkedin.com/in/chrislernunes"
+              aria-label="LinkedIn"
+              className="transition-colors hover:text-text"
+            >
+              <LinkedIn />
+            </a>
+            <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="transition-colors hover:text-text">
+              <Mail />
+            </a>
           </div>
-        ))}
-      </div>
-      <div className="border-t border-line">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-mute sm:flex-row sm:items-center sm:justify-between md:px-8">
-          <span>© {new Date().getFullYear()} Molecule</span>
-          <span>Research and paper simulation. Not a broker.</span>
         </div>
+        <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-mute" aria-label="Legal">
+          <Link href="/terms" className="transition-colors hover:text-text">
+            Terms of Service
+          </Link>
+          <Link href="/privacy" className="transition-colors hover:text-text">
+            Privacy Policy
+          </Link>
+          <span>Copyright © {new Date().getFullYear()} MoleculeAI. All rights reserved.</span>
+        </nav>
       </div>
     </footer>
+  );
+}
+
+function LinkedIn() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M4.7 3.3A2.2 2.2 0 1 0 4.7 7.7 2.2 2.2 0 0 0 4.7 3.3ZM3 9h3.4v12H3V9Zm6.2 0H12.5v1.6h.1c.4-.8 1.5-1.7 3.1-1.7 3.3 0 3.9 2.2 3.9 5V21H16v-6.3c0-1.5 0-3.4-2.1-3.4s-2.4 1.6-2.4 3.3V21H9.2V9Z" />
+    </svg>
+  );
+}
+
+function Mail() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

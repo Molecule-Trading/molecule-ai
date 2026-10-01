@@ -108,7 +108,11 @@ export default function ResearchPage() {
           {mounted ? greeting : "Let’s start building"}
         </h1>
         <p className="mt-3 text-sm text-mute">Build, backtest, or explore a new trading idea.</p>
-        <div className="mt-8 rounded-2xl border border-line bg-ink-900 p-3">
+        <div className="mt-8 overflow-hidden rounded-2xl border border-line bg-ink-900">
+          <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full border border-line text-[10px] text-mute">M</span>
+            <span className="text-xs text-mute">MoleculeAI</span>
+          </div>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -116,8 +120,8 @@ export default function ResearchPage() {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
             }}
             rows={3}
-            placeholder="When headlines report a disruption to…"
-            className="w-full resize-none bg-transparent px-2 py-2 text-sm text-text outline-none placeholder:text-mute"
+            placeholder="Describe a trading idea. MoleculeAI builds it, simulates it, and tests it."
+            className="w-full resize-none bg-transparent px-4 py-3 text-sm leading-relaxed text-text outline-none placeholder:text-mute"
           />
           {files.length > 0 && (
             <div className="flex flex-wrap gap-2 px-1 pb-1">
@@ -133,7 +137,7 @@ export default function ResearchPage() {
               ))}
             </div>
           )}
-          <div className="mt-2 flex items-center justify-between gap-2 px-1">
+          <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-2.5">
             <div className="flex items-center gap-2">
               <button
                 type="button"
