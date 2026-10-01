@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Run } from "@/lib/api";
 import { n, pct, shortDate, strategyTicker, strategyTitle } from "@/lib/format";
 
-export function StrategyCard({ run }: { run: Run }) {
+export function StrategyCard({ run, deployed = false }: { run: Run; deployed?: boolean }) {
   const a = run.results?.analytics;
   const ret = typeof a?.total_return === "number" ? a.total_return : undefined;
   const weak = typeof ret === "number" ? ret < 0 : false;
@@ -20,11 +20,13 @@ export function StrategyCard({ run }: { run: Run }) {
           {strategyTicker(run)}
         </span>
         <div className="flex gap-2 text-[10px] uppercase tracking-wider">
-          <span className="rounded-full border border-line px-2 py-0.5 text-mute">Paper</span>
+          {deployed ? (
+            <span className="rounded-full border border-emerald-800 px-2 py-0.5 text-emerald-400">Deployed</span>
+          ) : (
+            <span className="rounded-full border border-line px-2 py-0.5 text-mute">Paper</span>
+          )}
           {backtested && (
-            <span className="rounded-full border border-emerald-800 px-2 py-0.5 text-emerald-400">
-              Backtested
-            </span>
+            <span className="rounded-full border border-line px-2 py-0.5 text-mute">Backtested</span>
           )}
           {run.status === "BLOCKED" && (
             <span className="rounded-full border border-line px-2 py-0.5 text-mute">Blocked</span>

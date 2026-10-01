@@ -1,28 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
-import { loadBrokers, loadProfile, saveBrokers, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
+import { loadProfile, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
+
+type Attachment = { name: string; size: number };
 
 export default function ResearchPage() {
   const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [brokerage, setBrokerage] = useState("");
-  const [brokers, setBrokers] = useState<{ id: string; name: string }[]>([]);
-  const [addingBroker, setAddingBroker] = useState(false);
-  const [brokerDraft, setBrokerDraft] = useState("");
+  const [files, setFiles] = useState<Attachment[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const p = loadProfile();
     setName([p.firstName, p.lastName].filter(Boolean).join(" "));
-    setBrokers(loadBrokers());
   }, []);
 
   const greeting = useMemo(() => {
@@ -30,19 +29,26 @@ export default function ResearchPage() {
     return first ? `Let’s start building, ${first}` : "Let’s start building";
   }, [name]);
 
+  function onFiles(list: FileList | null) {
+    if (!list?.length) return;
+    const next = Array.from(list).map((f) => ({ name: f.name, size: f.size }));
+    setFiles((prev) => [...prev, ...next].slice(0, 6));
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function submit() {
     const hypothesis = text.trim();
     if (hypothesis.length < 8) return;
     setBusy(true);
     setError(null);
+    const note = files.length ? `\n\nAttached: ${files.map((f) => f.name).join(", ")}` : "";
     const chat: Chat = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`,
       title: titleFromHypothesis(hypothesis),
-      hypothesis,
+      hypothesis: hypothesis + note,
       createdAt: new Date().toISOString(),
       conviction: 1,
       sources: ["Market & news"],
-      brokerage: brokerage || undefined,
     };
     upsertChat(chat);
     try {
@@ -61,7 +67,7 @@ export default function ResearchPage() {
 
   return (
     <PageShell center>
-      <div className="flex w-full max-w-2xl flex-1 flex-col justify-center py-8">
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center py-8">
         <h1 className="font-serif text-4xl font-medium tracking-tight md:text-5xl">
           {mounted ? greeting : "Let’s start building"}
         </h1>
@@ -77,57 +83,36 @@ export default function ResearchPage() {
             placeholder="When headlines report a disruption to…"
             className="w-full resize-none bg-transparent px-2 py-2 text-sm text-text outline-none placeholder:text-mute"
           />
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 px-1">
-            {addingBroker ? (
-              <form
-                className="flex items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const name = brokerDraft.trim();
-                  if (!name) return;
-                  const next = [...brokers, { id: String(Date.now()), name }];
-                  setBrokers(next);
-                  saveBrokers(next.map((b) => ({ ...b, status: "linked" as const })));
-                  setBrokerage(name);
-                  setBrokerDraft("");
-                  setAddingBroker(false);
-                }}
-              >
-                <input
-                  autoFocus
-                  value={brokerDraft}
-                  onChange={(e) => setBrokerDraft(e.target.value)}
-                  placeholder="Brokerage name"
-                  className="rounded-full border border-line bg-ink-950 px-3 py-1.5 text-xs text-text outline-none"
-                />
-                <button type="submit" className="text-xs text-text">
-                  Link
+          {files.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-1 pb-1">
+              {files.map((f) => (
+                <button
+                  key={f.name}
+                  type="button"
+                  onClick={() => setFiles((prev) => prev.filter((x) => x.name !== f.name))}
+                  className="rounded-full border border-line px-2.5 py-1 text-[11px] text-mute hover:text-text"
+                >
+                  {f.name} ×
                 </button>
-                <button type="button" onClick={() => setAddingBroker(false)} className="text-xs text-mute">
-                  Cancel
-                </button>
-              </form>
-            ) : (
-              <select
-                value={brokerage}
-                onChange={(e) => {
-                  if (e.target.value === "__add") {
-                    setAddingBroker(true);
-                    return;
-                  }
-                  setBrokerage(e.target.value);
-                }}
-                className="rounded-full border border-line bg-ink-950 px-3 py-1.5 text-xs text-mute outline-none"
-              >
-                <option value="">+ Link your brokerage</option>
-                {brokers.map((b) => (
-                  <option key={b.id} value={b.name}>
-                    {b.name}
-                  </option>
-                ))}
-                <option value="__add">Add brokerage…</option>
-              </select>
-            )}
+              ))}
+            </div>
+          )}
+          <div className="mt-2 flex items-center justify-between gap-2 px-1">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-ink-950 px-3 text-xs text-mute hover:text-text"
+            >
+              <Paperclip />
+              Attach
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => onFiles(e.target.files)}
+            />
             <div className="flex items-center gap-3">
               <span className="text-xs text-mute">molecule 1.0</span>
               <button
@@ -145,5 +130,19 @@ export default function ResearchPage() {
         </div>
       </div>
     </PageShell>
+  );
+}
+
+function Paperclip() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8.5 12.5l6.2-6.2a3 3 0 114.2 4.2l-7.6 7.6a4.5 4.5 0 11-6.4-6.4l7.1-7.1"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

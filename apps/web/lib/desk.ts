@@ -40,6 +40,19 @@ export type DeskPlan = {
 };
 
 const PLAN = "molecule.desk.plan";
+const PAPER = "molecule.desk.paper";
+
+export type PaperPosition = {
+  runId: string;
+  title: string;
+  ticker: string;
+  hypothesis: string;
+  deployedAt: string;
+  ret?: number;
+  sharpe?: number;
+  pnl?: number;
+  trades?: number;
+};
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -116,6 +129,26 @@ export function savePlan(value: DeskPlan) {
   write(PLAN, value);
 }
 
+export function loadPaper(): PaperPosition[] {
+  return read<PaperPosition[]>(PAPER, []);
+}
+
+export function isPaper(runId: string) {
+  return loadPaper().some((p) => p.runId === runId);
+}
+
+export function deployPaper(position: PaperPosition) {
+  const next = [position, ...loadPaper().filter((p) => p.runId !== position.runId)];
+  write(PAPER, next);
+  return next;
+}
+
+export function stopPaper(runId: string) {
+  const next = loadPaper().filter((p) => p.runId !== runId);
+  write(PAPER, next);
+  return next;
+}
+
 export function signOutLocal() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(CHATS);
@@ -123,4 +156,5 @@ export function signOutLocal() {
   window.localStorage.removeItem(BROKERS);
   window.localStorage.removeItem(SAFETY);
   window.localStorage.removeItem(PLAN);
+  window.localStorage.removeItem(PAPER);
 }

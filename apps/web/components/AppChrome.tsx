@@ -8,18 +8,19 @@ import { Wordmark } from "@/components/Wordmark";
 const LINKS = [
   { href: "/research", label: "Research" },
   { href: "/runs", label: "Strategies" },
+  { href: "/portfolio", label: "Portfolio" },
   { href: "/settings", label: "Settings" },
 ];
 
-export const frameClass = "mx-auto w-full max-w-6xl px-4 md:px-6";
+export const frameClass = "w-full px-5 md:px-8";
 
 export function AppChrome() {
   const path = usePathname();
   return (
     <div className={`${frameClass} flex items-center justify-between gap-4 py-4`}>
       <Wordmark />
-      <div className="flex items-center gap-4 sm:gap-5">
-        <nav className="flex items-center gap-3 text-sm text-mute sm:gap-4">
+      <div className="flex items-center gap-4 sm:gap-6">
+        <nav className="flex items-center gap-3 text-sm text-mute sm:gap-5">
           {LINKS.map((l) => {
             const on = path === l.href || path.startsWith(l.href + "/");
             return (
