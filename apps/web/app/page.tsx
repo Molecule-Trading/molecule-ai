@@ -159,7 +159,7 @@ export default function Home() {
         </section>
 
         <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-3xl px-5 pb-8 pt-4 md:px-8 md:pb-16">
+          <div className="mx-auto w-full max-w-5xl px-5 pb-10 pt-2 md:px-8 md:pb-20">
             <StrategyThread />
           </div>
         </section>

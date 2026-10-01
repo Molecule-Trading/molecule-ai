@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-const STEPS = [
-  "Reading the sentence",
-  "Momentum, twenty sessions",
-  "Volatility has to be falling",
-  "Costs stay on the path",
-  "Paper it if the path holds",
+const LINES = [
+  "Reading the sentence.",
+  "Twenty-session return, positive.",
+  "Volatility has to be falling.",
+  "Costs stay on the path.",
+  "The run lands on the desk.",
 ];
 
 export function ThoughtTrace() {
@@ -15,48 +15,44 @@ export function ThoughtTrace() {
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setN(STEPS.length);
+      setN(LINES.length);
       return;
     }
     const id = window.setInterval(() => {
-      setN((v) => (v >= STEPS.length ? 1 : v + 1));
-    }, 1400);
+      setN((v) => (v >= LINES.length ? 1 : v + 1));
+    }, 1300);
     return () => window.clearInterval(id);
   }, []);
 
   return (
-    <aside className="hero-in w-full max-w-md justify-self-end rounded-2xl border border-line bg-ink-950/70 p-5 backdrop-blur-md" style={{ animationDelay: "280ms" }}>
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-mute">Chain of thought</p>
-        <span className="font-mono text-[11px] text-mute">MoleculeAI</span>
-      </div>
-      <ol className="mt-5">
-        {STEPS.map((step, i) => {
+    <div className="hero-in hidden w-full self-stretch lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
+      <ol className="flex h-full flex-col justify-start gap-0 pt-2">
+        {LINES.map((line, i) => {
           const on = i < n;
           const current = i === n - 1;
           return (
-            <li key={step} className="grid grid-cols-[16px_1fr] gap-3">
+            <li key={line} className="grid grid-cols-[18px_1fr] gap-4">
               <span className="flex flex-col items-center">
                 <span
-                  className={`mt-1 h-2 w-2 rounded-full transition-colors duration-500 ${
+                  className={`mt-1.5 h-1.5 w-1.5 rounded-full transition-all duration-500 ${
                     on ? "bg-text" : "bg-line"
-                  } ${current ? "scale-110" : ""}`}
+                  } ${current ? "scale-125" : ""}`}
                 />
-                {i < STEPS.length - 1 && (
-                  <span className={`my-1 w-px flex-1 transition-colors duration-500 ${i < n - 1 ? "bg-text/50" : "bg-line"}`} />
+                {i < LINES.length - 1 && (
+                  <span className={`mt-1 h-12 w-px transition-colors duration-500 ${i < n - 1 ? "bg-text/40" : "bg-line"}`} />
                 )}
               </span>
               <p
-                className={`pb-4 text-sm leading-relaxed transition-all duration-500 ${
-                  on ? "translate-y-0 text-text opacity-100" : "translate-y-1 text-mute opacity-30"
+                className={`pt-0.5 text-[15px] leading-none transition-all duration-500 ${
+                  on ? "text-text opacity-100" : "text-mute opacity-25"
                 }`}
               >
-                {step}
+                {line}
               </p>
             </li>
           );
         })}
       </ol>
-    </aside>
+    </div>
   );
 }

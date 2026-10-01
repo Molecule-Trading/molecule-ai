@@ -16,7 +16,7 @@ export function StartLink({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/login"
-      className={`inline-flex h-11 items-center justify-center rounded-full bg-text px-4 text-sm font-medium text-ink-950 transition duration-150 ease-out hover:opacity-90 active:scale-[0.96] sm:px-5 ${className}`}
+      className={`inline-flex h-9 items-center justify-center rounded-full bg-text px-3.5 text-[13px] font-medium text-ink-950 transition duration-150 ease-out hover:opacity-90 active:scale-[0.96] ${className}`}
     >
       Get started for free
     </Link>

@@ -7,18 +7,9 @@ export function SiteFooter() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-8">
         <div className="flex items-center gap-5">
           <Wordmark className="h-7 w-auto" />
-          <div className="flex items-center gap-3 text-mute">
-            <a
-              href="https://www.linkedin.com/in/chrislernunes"
-              aria-label="LinkedIn"
-              className="transition-colors hover:text-text"
-            >
-              <LinkedIn />
-            </a>
-            <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="transition-colors hover:text-text">
-              <Mail />
-            </a>
-          </div>
+          <a href="https://x.com/chrislernunes" aria-label="X" className="text-mute transition-colors hover:text-text">
+            <XIcon />
+          </a>
         </div>
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-mute" aria-label="Legal">
           <Link href="/terms" className="transition-colors hover:text-text">
@@ -28,16 +19,19 @@ export function SiteFooter() {
             Privacy Policy
           </Link>
           <span>Copyright © {new Date().getFullYear()} MoleculeAI. All rights reserved.</span>
+          <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="text-mute transition-colors hover:text-text">
+            <Mail />
+          </a>
         </nav>
       </div>
     </footer>
   );
 }
 
-function LinkedIn() {
+function XIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M4.7 3.3A2.2 2.2 0 1 0 4.7 7.7 2.2 2.2 0 0 0 4.7 3.3ZM3 9h3.4v12H3V9Zm6.2 0H12.5v1.6h.1c.4-.8 1.5-1.7 3.1-1.7 3.3 0 3.9 2.2 3.9 5V21H16v-6.3c0-1.5 0-3.4-2.1-3.4s-2.4 1.6-2.4 3.3V21H9.2V9Z" />
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M14.7 10.3 22.4 1.5h-1.8l-6.7 7.6L8.4 1.5H1.6l8.1 11.5L1.6 22.5h1.8l7.1-8.1 5.7 8.1h6.8l-8.3-12.2Zm-2.5 2.8-.8-1.1L4.1 2.9h2.8l5.2 7.3.8 1.1 6.8 9.5h-2.8l-5.5-7.7Z" />
     </svg>
   );
 }

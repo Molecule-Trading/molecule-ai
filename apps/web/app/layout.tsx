@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "MoleculeAI",
   description: "Describe a trading idea. MoleculeAI builds the strategy, simulates it, and tests it.",
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/favicon.png", apple: "/favicon.png" },
 };
 
 const themeBoot = `(function(){try{var r=document.documentElement;r.classList.add("dark");r.classList.remove("light");r.dataset.theme="dark";}catch(e){}})();`;
