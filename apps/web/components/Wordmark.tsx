@@ -9,7 +9,7 @@ function logoSrc(reversed: string) {
 
 export function Wordmark() {
   return (
-    <Link href="/research" className="block shrink-0" aria-label="Molecule">
+    <Link href="/" className="block shrink-0" aria-label="Molecule">
       <img src={logoSrc(logoOnDarkRev)} alt="" className="h-8 w-auto" />
     </Link>
   );

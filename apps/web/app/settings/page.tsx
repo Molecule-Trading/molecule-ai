@@ -7,7 +7,6 @@ import {
   loadPlan,
   loadProfile,
   loadSafety,
-  savePlan,
   saveProfile,
   saveSafety,
   signOutLocal,
@@ -57,7 +56,10 @@ function SettingsInner() {
 
   useEffect(() => {
     const t = params.get("tab");
-    if (t === "brokerages" || t === "pricing") setTab("billing");
+    if (t === "brokerages" || t === "pricing") {
+      router.replace("/pricing");
+      return;
+    }
     else if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
     else setTab("profile");
   }, [params]);
@@ -71,7 +73,7 @@ function SettingsInner() {
   function signOut() {
     signOutLocal();
     setProfile({ firstName: "", lastName: "", email: "" });
-    router.push("/research");
+    router.push("/");
   }
 
   function persistSafety(next: Safety) {
@@ -264,14 +266,10 @@ function SettingsInner() {
                   <p className="text-sm">{plan === "pro" ? "Pro" : "No active subscription."}</p>
                   <button
                     type="button"
-                    onClick={() => {
-                      const next = plan === "pro" ? "free" : "pro";
-                      setPlan(next);
-                      savePlan({ plan: next, cycle: "monthly" });
-                    }}
+                    onClick={() => router.push("/pricing")}
                     className="mt-4 rounded-lg bg-text px-4 py-2 text-sm font-medium text-ink-950"
                   >
-                    {plan === "pro" ? "Cancel" : "Subscribe"}
+                    {plan === "pro" ? "Manage plan" : "Subscribe"}
                   </button>
                 </div>
               </div>

@@ -41,6 +41,21 @@ export type DeskPlan = {
 
 const PLAN = "molecule.desk.plan";
 const PAPER = "molecule.desk.paper";
+const SESSION = "molecule.desk.session";
+
+export const ADMIN = {
+  email: "admin@molecule.ai",
+  password: "MoleculeDesk-1",
+  firstName: "Molecule",
+  lastName: "Admin",
+  role: "admin" as const,
+};
+
+export type Session = {
+  email: string;
+  role: "admin";
+  signedInAt: string;
+};
 
 export type PaperPosition = {
   runId: string;
@@ -157,4 +172,31 @@ export function signOutLocal() {
   window.localStorage.removeItem(SAFETY);
   window.localStorage.removeItem(PLAN);
   window.localStorage.removeItem(PAPER);
+  window.localStorage.removeItem(SESSION);
+  window.localStorage.removeItem("molecule.desk.2fa");
+}
+
+export function loadSession(): Session | null {
+  return read<Session | null>(SESSION, null);
+}
+
+export function signIn(email: string, password: string): Session | null {
+  const ok =
+    email.trim().toLowerCase() === ADMIN.email && password === ADMIN.password;
+  if (!ok) return null;
+  const session: Session = {
+    email: ADMIN.email,
+    role: "admin",
+    signedInAt: new Date().toISOString(),
+  };
+  write(SESSION, session);
+  const profile = loadProfile();
+  if (!profile.email) {
+    saveProfile({
+      firstName: ADMIN.firstName,
+      lastName: ADMIN.lastName,
+      email: ADMIN.email,
+    });
+  }
+  return session;
 }
