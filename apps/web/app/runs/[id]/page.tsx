@@ -8,7 +8,7 @@ import { PageShell } from "@/components/PageShell";
 import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
 import { deployPaper, isPaper, stopPaper } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
-import { clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
+import { bookIdOf, clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
 
 const SPANS: Span[] = ["1Y", "3Y", "5Y", "MAX"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -31,9 +31,10 @@ export default function RunDetailPage() {
     setPaper(isPaper(id));
   }, [id]);
 
-  const full = useMemo(() => quote("MAX", fee, slip), [fee, slip]);
+  const book = bookIdOf(id);
+  const full = useMemo(() => quote("MAX", fee, slip, book), [fee, slip, book]);
   const view = useMemo(() => clip(full.bars, full.trades, full.closed, from, to), [full, from, to]);
-  const split = useMemo(() => splitOf(view.bars), [view.bars]);
+  const split = useMemo(() => splitOf(view.bars, book), [view.bars, book]);
   const fan = useMemo(() => fanOf(view.bars), [view.bars]);
   const years = useMemo(() => yearRows(view.bars), [view.bars]);
   const dist = useMemo(() => histOf(view.rets), [view.rets]);
@@ -141,15 +142,15 @@ export default function RunDetailPage() {
         <ChartCard title="Underwater Drawdown Plot" note="Days under the running peak">
           <DrawdownChart key={`dd-${span}-${fee}`} data={view.bars} height={220} />
         </ChartCard>
-        <ChartCard title="Monte Carlo" note="48 paths. Dashed lines are the 10th and 90th. Solid is the median.">
-          <MonteCarloChart key={`mc-${from}-${to}-${fee}`} data={fan} height={280} />
-        </ChartCard>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-3">
+          <ChartCard title="Monte Carlo" note="48 paths. 10th, median, 90th.">
+            <MonteCarloChart key={`mc-${from}-${to}-${fee}-${book}`} data={fan} height={240} />
+          </ChartCard>
           <ChartCard title="Return distribution" note="Daily book returns">
-            <DistChart key={`rd-${from}-${to}`} data={dist} label="Days" height={260} />
+            <DistChart key={`rd-${from}-${to}-${book}`} data={dist} label="Days" height={240} />
           </ChartCard>
           <ChartCard title="Volatility distribution" note="20-session realized volatility">
-            <DistChart key={`vd-${from}-${to}`} data={volDist} label="Sessions" height={260} />
+            <DistChart key={`vd-${from}-${to}-${book}`} data={volDist} label="Sessions" height={240} />
           </ChartCard>
         </div>
 
@@ -263,9 +264,20 @@ function RangePopover({
     setCursor(`${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`);
   }
 
+  const y0 = Number(min.slice(0, 4));
+  const y1 = Number(max.slice(0, 4));
+  const years = Array.from({ length: Math.max(0, y1 - y0 + 1) }, (_, i) => y0 + i);
+
   return (
-    <div className="absolute left-0 top-10 z-30 w-[280px] rounded-xl border border-line bg-ink-950 p-3 shadow-2xl">
-      <div className="flex items-center justify-between text-sm">
+    <div className="absolute left-0 top-10 z-30 w-[320px] rounded-xl border border-line bg-ink-950 p-3 shadow-2xl">
+      <div className="flex flex-wrap gap-1">
+        {years.map((yr) => (
+          <button key={yr} type="button" onClick={() => setCursor(`${yr}-${String(m).padStart(2, "0")}`)} className={`rounded-full px-2 py-0.5 text-[11px] ${yr === y ? "bg-text text-ink-950" : "text-mute hover:text-text"}`}>
+            {yr}
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between text-sm">
         <button type="button" onClick={() => shift(-1)} className="px-2 text-mute hover:text-text">‹</button>
         <span>{first.toLocaleString("en-US", { month: "long", year: "numeric", timeZone: "UTC" })}</span>
         <button type="button" onClick={() => shift(1)} className="px-2 text-mute hover:text-text">›</button>

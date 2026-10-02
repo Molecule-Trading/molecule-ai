@@ -1,6 +1,7 @@
 /** Recorded engine sample for the hosted UI when FastAPI is not attached. */
 
 import { fixture } from "./engine-fixture";
+import { quote, type BookId } from "./sampleBook";
 
 const OFFLINE =
   "This deployment is the research UI. A new hypothesis was not executed. Attach an API origin to run the engine. The recorded sample is engine output on synthetic data, not a live run.";
@@ -11,7 +12,42 @@ const recorded = fixture.run as AnyRec;
 const markets = fixture.markets as AnyRec[];
 const datasets = fixture.datasets as AnyRec[];
 
-export const sampleRun = recorded;
+function sleeve(id: string, name: string, hypothesis: string, ticker: string, book: BookId) {
+  const q = quote("MAX", 0.1, 0.05, book);
+  const a = q.metrics;
+  const spec = { ...(recorded.strategy_spec || {}), name, universe: { ...(recorded.strategy_spec?.universe || {}), target: { ticker, symbol: ticker } } };
+  return {
+    ...recorded,
+    id,
+    hypothesis,
+    status: "COMPLETED",
+    strategy_spec: spec,
+    results: {
+      ...(recorded.results || {}),
+      analytics: {
+        ...(recorded.results?.analytics || {}),
+        total_return: a.total_return,
+        cagr: a.cagr,
+        sharpe: a.sharpe,
+        sortino: a.sortino,
+        calmar: a.calmar,
+        max_drawdown: a.max_drawdown,
+        trade_count: q.trades.length,
+        win_rate: a.win_rate,
+        net_pnl: a.net_pnl,
+        gross_pnl: a.gross_pnl,
+      },
+    },
+  };
+}
+
+const sleeves = [
+  sleeve(String(recorded.id), String(recorded.strategy_spec?.name || "Falling vol momentum"), String(recorded.hypothesis), "BOOK", "momentum"),
+  sleeve("sample-fade-vol", "Quiet pullback", "Buy the twenty-session pullback only while volatility sits under its own median.", "FADE", "fade"),
+  sleeve("sample-trend-60", "Sixty session trend", "Stay long while the sixty-session return is positive.", "TREND", "trend"),
+];
+
+export const sampleRun = sleeves[0];
 
 const BLOCKED_STAGES = (recorded.stages as AnyRec[]).map((s) => {
   if (s.key === "RUNNING_BACKTEST" || s.key === "CALCULATING_ANALYTICS" || s.key === "INTERPRETING") {
@@ -59,8 +95,9 @@ export function hostedResponse(method: string, path: string, hypothesis?: string
     return { datasets: filtered };
   }
 
-  if (clean === "/runs") return { runs: [recorded] };
-  if (clean === `/runs/${recorded.id}`) return recorded;
+  if (clean === "/runs") return { runs: sleeves };
+  const hit = sleeves.find((s) => clean === `/runs/${s.id}`);
+  if (hit) return hit;
 
   if (method === "POST" && clean === "/research") {
     const text = hypothesis?.trim() || String(recorded.hypothesis);

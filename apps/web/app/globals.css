@@ -37,6 +37,9 @@ html {
   scroll-behavior: smooth;
 }
 
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 body {
   font-feature-settings: "ss01" 1;
   transition: background-color 180ms ease, color 180ms ease;

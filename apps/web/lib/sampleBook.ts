@@ -123,7 +123,7 @@ type Built = {
   days: Day[];
 };
 
-function build(seed = 8): Built {
+function build(seed = 8, rule: "momentum" | "fade" | "trend" = "momentum"): Built {
   const rng = mulberry32(seed);
   const n = 1512;
   const calendar = sessions(n + 1);
@@ -143,15 +143,18 @@ function build(seed = 8): Built {
   let peak = capital;
   let fills = 0;
 
-  for (let i = 40; i < px.length; i++) {
+  const start = rule === "trend" ? 60 : 40;
+  for (let i = start; i < px.length; i++) {
     const ret20 = px[i] / px[i - 20] - 1;
+    const ret60 = i >= 60 ? px[i] / px[i - 60] - 1 : 0;
     const w = rets.slice(i - 19, i + 1);
     const vol = stdev(w);
     const hist: number[] = [];
-    for (let j = Math.max(40, i - 60); j <= i; j++) hist.push(stdev(rets.slice(j - 19, j + 1)));
+    for (let j = Math.max(start, i - 60); j <= i; j++) hist.push(stdev(rets.slice(j - 19, j + 1)));
     hist.sort((a, b) => a - b);
     const med = hist[Math.floor(hist.length / 2)];
-    const want = ret20 > 0 && vol < med ? 1 : 0;
+    const want = rule === "fade" ? (ret20 < 0 && vol < med ? 1 : 0) : rule === "trend" ? (ret60 > 0 ? 1 : 0) : ret20 > 0 && vol < med ? 1 : 0;
+    const reason = rule === "fade" ? (want === 1 ? "pullback, vol below median" : "bounce") : rule === "trend" ? (want === 1 ? "sixty-session return positive" : "trend failed") : want === 1 ? "return positive, vol below median" : "gate failed";
     const fee = want !== pos ? 0.001 : 0;
     const turn = want !== pos ? 1 : 0;
     if (want !== pos) {
@@ -164,7 +167,7 @@ function build(seed = 8): Built {
         quantity: qty,
         price: px[i],
         fill_ts: calendar[i],
-        reason: want === 1 ? "return positive, vol below median" : "gate failed",
+        reason,
       });
       if (want === 1) entry = capital;
       pos = want;
@@ -179,7 +182,21 @@ function build(seed = 8): Built {
   return { bars, trades, closed, rets: stratRets, days: tape };
 }
 
-const BOOK = build(8);
+export type BookId = "momentum" | "fade" | "trend";
+
+const BOOKS: Record<BookId, Built> = {
+  momentum: build(8, "momentum"),
+  fade: build(21, "fade"),
+  trend: build(44, "trend"),
+};
+const BOOK = BOOKS.momentum;
+
+export function bookIdOf(runId?: string): BookId {
+  if (!runId) return "momentum";
+  if (runId.includes("fade")) return "fade";
+  if (runId.includes("trend")) return "trend";
+  return "momentum";
+}
 
 export const ASSUMPTIONS = [
   ["Initial capital", "100,000"],
@@ -197,14 +214,15 @@ export function windowOf(span: Span) {
   return { bars: q.bars, trades: q.trades, metrics: q.metrics };
 }
 
-export function splitOf(bars: Bar[]) {
+export function splitOf(bars: Bar[], book: BookId = "momentum") {
+  const closed = BOOKS[book].closed;
   const cut = Math.max(1, Math.floor(bars.length * 0.7));
   const left = bars.slice(0, cut);
   const right = bars.slice(cut);
   const at = left[left.length - 1]?.t ?? bars[0]?.t ?? "";
   const end = bars[bars.length - 1]?.t ?? "";
-  const leftClosed = BOOK.closed.filter((c) => c.t <= at && c.t >= (bars[0]?.t ?? "")).map((c) => c.pnl);
-  const rightClosed = BOOK.closed.filter((c) => c.t > at && c.t <= end).map((c) => c.pnl);
+  const leftClosed = closed.filter((c) => c.t <= at && c.t >= (bars[0]?.t ?? "")).map((c) => c.pnl);
+  const rightClosed = closed.filter((c) => c.t > at && c.t <= end).map((c) => c.pnl);
   return {
     at,
     inn: metricsOf(left.map((b) => b.equity), leftClosed),
@@ -215,9 +233,10 @@ export function splitOf(bars: Bar[]) {
   };
 }
 
-export function quote(span: Span, feePct = 0.1, slipPct = 0.05) {
+export function quote(span: Span, feePct = 0.1, slipPct = 0.05, book: BookId = "momentum") {
+  const src = BOOKS[book];
   const cost = Math.max(0, feePct + slipPct) / 100;
-  const sliced = span === "MAX" ? BOOK.days : BOOK.days.slice(-SESSIONS[span]);
+  const sliced = span === "MAX" ? src.days : src.days.slice(-SESSIONS[span]);
   let capital = 100000;
   let gross = 100000;
   let bench = 100000;
@@ -413,4 +432,37 @@ export function fanOf(bars: Bar[], paths = 48): FanPoint[] {
     const p90 = col[Math.floor(col.length * 0.9)];
     return { t: b.t, p10, p50, p90, band: [p10, p90] };
   });
+}
+
+const SLEEVE_IDS: BookId[] = ["momentum", "fade", "trend"];
+
+export function portfolioOf(feePct = 0.1, slipPct = 0.05) {
+  const sleeves = SLEEVE_IDS.map((id) => quote("MAX", feePct, slipPct, id));
+  const n = Math.min(...sleeves.map((s) => s.bars.length));
+  let equity = 100000;
+  let peak = equity;
+  const bars: Bar[] = [];
+  const prev = sleeves.map((s) => s.bars[0]?.equity || 100000);
+  for (let i = 0; i < n; i++) {
+    if (i > 0) {
+      let r = 0;
+      sleeves.forEach((s, k) => {
+        const e = s.bars[i].equity;
+        r += e / prev[k] - 1;
+        prev[k] = e;
+      });
+      equity *= 1 + r / sleeves.length;
+    } else {
+      sleeves.forEach((s, k) => {
+        prev[k] = s.bars[0].equity;
+      });
+    }
+    peak = Math.max(peak, equity);
+    bars.push({ t: sleeves[0].bars[i].t, equity, drawdown: equity / peak - 1 });
+  }
+  return {
+    bars,
+    metrics: metricsOf(bars.map((b) => b.equity), []),
+    sleeves: sleeves.map((s, i) => ({ id: SLEEVE_IDS[i], metrics: s.metrics, trades: s.trades.length })),
+  };
 }
