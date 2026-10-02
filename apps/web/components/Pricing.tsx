@@ -188,17 +188,3 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
     </div>
   );
 }
-
-function renewsOn(cycle: "monthly" | "yearly") {
-  const d = new Date();
-  if (cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
-  else d.setMonth(d.getMonth() + 1);
-  return d.toISOString();
-}
-
-function stamp(iso?: string) {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
