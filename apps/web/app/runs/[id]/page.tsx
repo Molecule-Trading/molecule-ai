@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
 import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
-import { addToBook, hideStrategy, inBook } from "@/lib/desk";
+import { addToBook, hideStrategy, loadBook, setWeight } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
 import { bookIdOf, clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
 
@@ -19,6 +19,7 @@ export default function RunDetailPage() {
   const [run, setRun] = useState<Run | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [held, setHeld] = useState(false);
+  const [weight, setWeightState] = useState("");
   const [span, setSpan] = useState<Span>("MAX");
   const [scale, setScale] = useState<"equity" | "pct" | "log">("equity");
   const [fee, setFee] = useState(0.1);
@@ -29,7 +30,9 @@ export default function RunDetailPage() {
 
   useEffect(() => {
     api<Run>(`/runs/${id}`).then(setRun).catch((e) => setErr(String(e)));
-    setHeld(inBook(id));
+    const sleeve = loadBook().find((p) => p.runId === id);
+    setHeld(!!sleeve);
+    setWeightState(sleeve ? String(sleeve.weight) : "");
   }, [id]);
 
   const book = bookIdOf(id);
@@ -45,13 +48,15 @@ export default function RunDetailPage() {
 
   function add() {
     if (!run || held) return;
-    addToBook({
+    const next = addToBook({
       runId: run.id,
       title: strategyTitle(run),
       ticker: strategyTicker(run),
       hypothesis: run.hypothesis,
     });
     setHeld(true);
+    const sleeve = next.find((p) => p.runId === run.id);
+    setWeightState(sleeve ? String(sleeve.weight) : "");
   }
 
   function removeStrategy() {
@@ -76,9 +81,29 @@ export default function RunDetailPage() {
             <button type="button" onClick={removeStrategy} className="rounded-full border border-line px-4 py-2 text-sm text-red-400">
               Delete
             </button>
-            <button type="button" onClick={add} disabled={held} className={`rounded-full px-4 py-2 text-sm font-medium ${held ? "border border-line text-mute" : "bg-text text-ink-950"}`}>
-              {held ? "In portfolio" : "Add to portfolio"}
-            </button>
+            {held ? (
+              <label className="flex items-center gap-2 text-xs text-mute">
+                Weight
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={weight}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    setWeightState(raw);
+                    if (raw.trim() === "") return;
+                    const n = Number(raw);
+                    if (Number.isFinite(n)) setWeight(id, n);
+                  }}
+                  className="w-16 rounded-md border border-line bg-ink-950 px-2 py-1 text-right font-mono text-sm text-text outline-none"
+                />
+              </label>
+            ) : (
+              <button type="button" onClick={add} className="rounded-full bg-text px-4 py-2 text-sm font-medium text-ink-950">
+                Add to portfolio
+              </button>
+            )}
           </div>
         </div>
 

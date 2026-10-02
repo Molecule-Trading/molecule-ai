@@ -10,6 +10,7 @@ import { bookIdOf, portfolioWeighted } from "@/lib/sampleBook";
 
 export default function PortfolioPage() {
   const [sleeves, setSleeves] = useState<Sleeve[]>([]);
+  const [draft, setDraft] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSleeves(loadBook());
@@ -43,7 +44,7 @@ export default function PortfolioPage() {
         </Link>
       </div>
 
-      {sleeves.length === 0 || !a ? (
+      {sleeves.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-dashed border-line px-6 py-16 text-center">
           <p className="text-sm text-mute">Nothing in the portfolio yet.</p>
           <Link href="/runs" className="mt-4 inline-block text-sm text-text underline">
@@ -52,31 +53,36 @@ export default function PortfolioPage() {
         </div>
       ) : (
         <>
-          <section className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4 xl:grid-cols-6">
-            <Stat label="CAGR" value={pct(a.cagr)} tone={a.cagr} />
-            <Stat label="Net P&L" value={money(a.net_pnl)} tone={a.net_pnl} />
-            <Stat label="Starting equity" value={money(a.starting_equity, true)} />
-            <Stat label="Final equity" value={money(a.ending_equity, true)} tone={a.ending_equity - a.starting_equity} />
-            <Stat label="Sharpe" value={n(a.sharpe)} tone={a.sharpe} />
-            <Stat label="Sortino" value={n(a.sortino)} tone={a.sortino} />
-            <Stat label="Calmar" value={n(a.calmar)} tone={a.calmar} />
-            <Stat label="Max drawdown" value={pct(a.max_drawdown)} down />
-            <Stat label="Longest drawdown" value={`${a.max_dd_days}d`} />
-            <Stat label="Volatility" value={a.volatility == null ? "—" : pct(a.volatility)} />
-            <Stat label="Max gain" value={pct(a.max_gain)} tone={a.max_gain} />
-            <Stat label="Max loss" value={pct(a.max_loss)} down />
-          </section>
-
-          <section className="mt-6 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-xl border border-line p-4">
-              <h2 className="mb-2 text-sm">Portfolio equity</h2>
-              <EquityChart data={book.bars} height={280} />
-            </div>
-            <div className="rounded-xl border border-line p-4">
-              <h2 className="mb-2 text-sm">Underwater Drawdown Plot</h2>
-              <DrawdownChart data={book.bars} height={280} />
-            </div>
-          </section>
+          {a ? (
+            <>
+              <section className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4 xl:grid-cols-6">
+                <Stat label="CAGR" value={pct(a.cagr)} tone={a.cagr} />
+                <Stat label="Net P&L" value={money(a.net_pnl)} tone={a.net_pnl} />
+                <Stat label="Starting equity" value={money(a.starting_equity, true)} />
+                <Stat label="Final equity" value={money(a.ending_equity, true)} tone={a.ending_equity - a.starting_equity} />
+                <Stat label="Sharpe" value={n(a.sharpe)} tone={a.sharpe} />
+                <Stat label="Sortino" value={n(a.sortino)} tone={a.sortino} />
+                <Stat label="Calmar" value={n(a.calmar)} tone={a.calmar} />
+                <Stat label="Max drawdown" value={pct(a.max_drawdown)} down />
+                <Stat label="Longest drawdown" value={`${a.max_dd_days}d`} />
+                <Stat label="Volatility" value={a.volatility == null ? "—" : pct(a.volatility)} />
+                <Stat label="Max gain" value={pct(a.max_gain)} tone={a.max_gain} />
+                <Stat label="Max loss" value={pct(a.max_loss)} down />
+              </section>
+              <section className="mt-6 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-line p-4">
+                  <h2 className="mb-2 text-sm">Portfolio equity</h2>
+                  <EquityChart data={book.bars} height={280} />
+                </div>
+                <div className="rounded-xl border border-line p-4">
+                  <h2 className="mb-2 text-sm">Underwater Drawdown Plot</h2>
+                  <DrawdownChart data={book.bars} height={280} />
+                </div>
+              </section>
+            </>
+          ) : (
+            <p className="mt-6 text-sm text-mute">Every weight is 0. Raise one to plot the book. The strategies stay here.</p>
+          )}
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {sleeves.map((s) => (
@@ -96,8 +102,14 @@ export default function PortfolioPage() {
                       type="number"
                       min={0}
                       step={1}
-                      value={s.weight}
-                      onChange={(e) => weight(s.runId, Number(e.target.value))}
+                      value={draft[s.runId] ?? String(s.weight)}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        setDraft((d) => ({ ...d, [s.runId]: raw }));
+                        if (raw.trim() === "") return;
+                        const n = Number(raw);
+                        if (Number.isFinite(n)) weight(s.runId, n);
+                      }}
                       className="w-16 rounded-md border border-line bg-ink-950 px-2 py-1 text-right font-mono text-sm text-text outline-none"
                     />
                     <span className="font-mono text-text">{((s.weight / total) * 100).toFixed(1)}%</span>

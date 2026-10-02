@@ -171,7 +171,8 @@ export function removeFromBook(runId: string) {
 }
 
 export function setWeight(runId: string, weight: number) {
-  const next = loadBook().map((p) => (p.runId === runId ? { ...p, weight: Math.max(0, weight) } : p));
+  const nextWeight = Number.isFinite(weight) ? Math.max(0, weight) : 0;
+  const next = loadBook().map((p) => (p.runId === runId ? { ...p, weight: nextWeight } : p));
   write(BOOK, next);
   return next;
 }
