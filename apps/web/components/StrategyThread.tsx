@@ -30,24 +30,42 @@ const vols: number[] = [];
 const volDist = histOf(vols);
 const split = splitOf(view.bars);
 const fan = fanOf(view.bars);
-const step = Math.max(1, Math.ceil(view.trades.length / 4));
-const TRADES = view.trades.filter((_, i) => i % step === 0).slice(0, 4);
 
 export function StrategyThread() {
+  const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const [started, setStarted] = useState(false);
   const [phase, setPhase] = useState(0);
-  const last = REPLY.length + 12;
+  const last = REPLY.length + 7;
 
   useEffect(() => {
+    const el = root.current;
+    if (!el) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setPhase(last);
+      setStarted(true);
       return;
     }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setStarted(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.28 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [last]);
+
+  useEffect(() => {
+    if (!started || phase >= last) return;
     const narrow = window.matchMedia("(max-width: 767px)").matches;
-    const delay = phase === 0 ? 600 : phase >= last ? 5200 : narrow ? 1700 : 900;
-    const timer = window.setTimeout(() => setPhase((p) => (p >= last ? 0 : p + 1)), delay);
+    const delay = phase === 0 ? 160 : narrow ? 1200 : 720;
+    const timer = window.setTimeout(() => setPhase((p) => Math.min(last, p + 1)), delay);
     return () => window.clearTimeout(timer);
-  }, [phase, last]);
+  }, [started, phase, last]);
 
   useEffect(() => {
     const el = scroller.current;
@@ -59,13 +77,13 @@ export function StrategyThread() {
     const node = el.querySelector(`[data-phase="${phase}"]`);
     if (!node) return;
     const top = node.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
-    el.scrollTo({ top: Math.max(0, top - 8), behavior: "smooth" });
+    el.scrollTo({ top: Math.max(0, top - 8), behavior: "auto" });
   }, [phase]);
 
   const lines = REPLY.slice(0, Math.max(0, phase - 1));
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-ink-900/60">
+    <div ref={root} className="overflow-hidden rounded-2xl border border-line bg-ink-900/60">
       <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <img src="/icon-32.png" alt="" className="h-5 w-5" />
@@ -125,47 +143,27 @@ export function StrategyThread() {
                   </div>
                 )}
                 {phase > REPLY.length + 4 && (
-                  <div data-phase={REPLY.length + 5} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                    <p className="mb-1 text-xs text-mute">Return distribution</p>
-                    <DistChart data={dist} label="Days" height={180} />
+                  <div data-phase={REPLY.length + 5} className="thread-in grid grid-cols-2 gap-3">
+                    <div className="min-w-0 rounded-xl border border-line bg-ink-950/50 px-2 py-3 sm:px-3">
+                      <p className="mb-1 text-xs text-mute">Return distribution</p>
+                      <DistChart data={dist} label="Days" height={168} />
+                    </div>
+                    <div className="min-w-0 rounded-xl border border-line bg-ink-950/50 px-2 py-3 sm:px-3">
+                      <p className="mb-1 text-xs text-mute">Volatility distribution</p>
+                      <DistChart data={volDist} label="Sessions" height={168} />
+                    </div>
                   </div>
                 )}
                 {phase > REPLY.length + 5 && (
-                  <div data-phase={REPLY.length + 6} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                    <p className="mb-1 text-xs text-mute">Volatility distribution</p>
-                    <DistChart data={volDist} label="Sessions" height={180} />
-                  </div>
-                )}
-                {phase > REPLY.length + 6 && (
-                  <div data-phase={REPLY.length + 7} className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line">
+                  <div data-phase={REPLY.length + 6} className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line">
                     <Sample title="In sample" m={split.inn} />
                     <Sample title="Out of sample" m={split.out} />
                   </div>
                 )}
-                {phase > REPLY.length + 7 && (
-                  <div data-phase={REPLY.length + 8} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                {phase > REPLY.length + 6 && (
+                  <div data-phase={REPLY.length + 7} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
                     <p className="mb-1 text-xs text-mute">Monte Carlo</p>
                     <MonteCarloChart data={fan} height={200} />
-                  </div>
-                )}
-                {phase > REPLY.length + 8 && (
-                  <div data-phase={phase} className="thread-in overflow-hidden rounded-xl border border-line">
-                    <div className="grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
-                      <span>Timestamp</span>
-                      <span>Side</span>
-                      <span className="text-right">Fill</span>
-                      <span className="text-right">Qty</span>
-                    </div>
-                    {TRADES.slice(0, phase - (REPLY.length + 8)).map((trade) => (
-                      <div key={trade.trade_id} className="thread-in grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] border-t border-line px-3 py-2 font-mono text-xs">
-                        <span className="text-mute">{trade.fill_ts.slice(0, 16).replace("T", " ")}</span>
-                        <span className={trade.side === "BUY" ? "font-semibold text-emerald-400" : "font-semibold text-red-400"}>
-                          {trade.side === "BUY" ? "Entry" : "Exit"}
-                        </span>
-                        <span className="text-right">{trade.price.toFixed(2)}</span>
-                        <span className="text-right">{Math.round(trade.quantity)}</span>
-                      </div>
-                    ))}
                   </div>
                 )}
               </div>
