@@ -65,7 +65,7 @@ export function StrategyThread() {
         </div>
         <p className="font-mono text-[11px] text-mute">molecule 1.0</p>
       </div>
-      <div ref={scroller} className="no-scrollbar h-[36rem] overflow-y-auto px-5 py-6 md:px-8">
+      <div ref={scroller} className="no-scrollbar h-[24rem] overflow-y-auto px-4 py-5 sm:h-[32rem] sm:px-5 md:h-[36rem] md:px-8 md:py-6">
         <div className="flex min-h-full flex-col gap-5">
           {phase >= 1 && (
             <div className="flex justify-end">

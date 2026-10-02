@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader, StartLink } from "@/components/SiteHeader";
 import { StrategyThread } from "@/components/StrategyThread";
 import { ThoughtTrace } from "@/components/ThoughtTrace";
+import { Pricing } from "@/components/Pricing";
 
 const WHY = [
   {
@@ -108,18 +109,18 @@ function SignalField() {
   }, []);
 
   const angle = -Math.PI / 2 + turn * Math.PI * 2;
-  const dotX = 50 + Math.cos(angle) * 36;
-  const dotY = 50 + Math.sin(angle) * 36;
+  const dotX = 50 + Math.cos(angle) * 30;
+  const dotY = 50 + Math.sin(angle) * 30;
   const active = Math.round(turn * INPUTS.length) % INPUTS.length;
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[460px]">
+    <div className="relative mx-auto aspect-square w-full max-w-[420px]">
       <svg className="absolute inset-0 h-full w-full text-line" viewBox="0 0 100 100" aria-hidden>
-        <circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" strokeWidth="0.35" />
+        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" strokeWidth="0.35" />
         <circle cx="50" cy="50" r="22" fill="none" stroke="currentColor" strokeWidth="0.3" strokeDasharray="0.8 1.4" />
         {INPUTS.map((_, i) => {
           const a = ((-90 + i * 60) * Math.PI) / 180;
-          return <line key={i} x1="50" y1="50" x2={50 + Math.cos(a) * 36} y2={50 + Math.sin(a) * 36} stroke="currentColor" strokeWidth="0.3" />;
+          return <line key={i} x1="50" y1="50" x2={50 + Math.cos(a) * 30} y2={50 + Math.sin(a) * 30} stroke="currentColor" strokeWidth="0.3" />;
         })}
       </svg>
       <div
@@ -132,12 +133,12 @@ function SignalField() {
       </div>
       {INPUTS.map((item, i) => {
         const a = ((-90 + i * 60) * Math.PI) / 180;
-        const x = 50 + Math.cos(a) * 36;
-        const y = 50 + Math.sin(a) * 36;
+        const x = 50 + Math.cos(a) * 30;
+        const y = 50 + Math.sin(a) * 30;
         const on = i === active;
         return (
           <div key={item.k} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
-            <div className={`whitespace-nowrap rounded-full border bg-ink-950 px-3.5 py-1.5 text-[13px] transition-colors duration-300 ${on ? "border-text text-text" : "border-line text-mute"}`}>
+            <div className={`whitespace-nowrap rounded-full border bg-ink-950 px-2.5 py-1 text-xs sm:px-3.5 sm:py-1.5 sm:text-[13px] transition-colors duration-300 ${on ? "border-text text-text" : "border-line text-mute"}`}>
               {item.label}
             </div>
           </div>
@@ -191,19 +192,19 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col overflow-x-clip">
       <SiteHeader />
       <main className="flex-1">
         <section className="relative overflow-hidden">
           <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
           <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-10 px-5 pb-16 pt-16 md:px-8 lg:grid-cols-2 lg:gap-16">
+          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-5 pb-14 pt-12 md:px-8 md:pb-20 md:pt-16 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2 lg:gap-16">
             <div>
               <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
                 MoleculeAI
               </p>
               <h1
-                className="hero-in mt-5 max-w-3xl font-serif text-5xl font-medium leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl"
+                className="hero-in mt-5 max-w-3xl font-serif text-4xl font-medium leading-[1.02] tracking-tight sm:text-5xl lg:text-7xl"
                 style={{ animationDelay: "120ms" }}
               >
                 Frontier AI model
@@ -211,7 +212,7 @@ export default function Home() {
                 for agentic trading.
               </h1>
               <p
-                className="hero-in mt-6 max-w-xl text-lg leading-relaxed text-mute md:text-xl"
+                className="hero-in mt-5 max-w-xl text-base leading-relaxed text-mute sm:text-lg"
                 style={{ animationDelay: "220ms" }}
               >
                 Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
@@ -224,18 +225,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-6xl px-5 pb-8 pt-10 md:px-8 md:pb-16 md:pt-16">
-            <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Product</p>
-            <StrategyThread />
+        <section id="product" className="scroll-mt-20 border-t border-line">
+          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-20">
+            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Product</p>
+            <h2 className="mt-4 max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight sm:text-5xl md:text-6xl">
+              Describe the idea. The desk does the rest.
+            </h2>
+            <div className="mt-8">
+              <StrategyThread />
+            </div>
           </div>
         </section>
 
         <section id="solutions" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-20 md:px-8 md:py-28">
+          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-24">
             <Reveal>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solution</p>
-              <h2 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
+              <h2 className="mt-4 max-w-3xl font-serif text-4xl font-medium leading-[1.05] tracking-tight sm:text-5xl md:text-7xl">
                 Anyone can trade
               </h2>
               <p className="mt-6 max-w-xl text-base leading-relaxed text-mute">
@@ -261,10 +267,10 @@ export default function Home() {
         </section>
 
         <section className="border-t border-line">
-          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-5 py-14 md:px-8 md:py-24 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
             <Reveal>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Inputs</p>
-              <h2 className="mt-5 max-w-md font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+              <h2 className="mt-4 max-w-md font-serif text-4xl font-medium leading-[1.02] tracking-tight sm:text-5xl md:text-6xl">
                 The test reads more than price.
               </h2>
               <p className="mt-6 max-w-md text-base leading-relaxed text-mute">
@@ -278,10 +284,10 @@ export default function Home() {
         </section>
 
         <section id="faq" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-24 md:px-8 md:py-32">
+          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-24">
             <Reveal>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">FAQ</p>
-              <h2 className="mt-5 font-serif text-4xl font-medium tracking-tight md:text-6xl">A few plain answers.</h2>
+              <h2 className="mt-4 font-serif text-4xl font-medium tracking-tight sm:text-5xl md:text-6xl">A few plain answers.</h2>
             </Reveal>
             <div className="mt-12">
               <FaqList />
@@ -289,16 +295,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-line">
-          <div className="mx-auto flex w-full max-w-6xl flex-col items-start px-5 py-24 md:px-8 md:py-32">
-            <Reveal>
-              <h2 className="max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight md:text-6xl">
-                Describe the idea. The desk does the rest.
-              </h2>
-              <div className="mt-8">
-                <StartLink />
-              </div>
-            </Reveal>
+        <section id="pricing" className="scroll-mt-20 border-t border-line">
+          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-20">
+            <Pricing />
           </div>
         </section>
       </main>

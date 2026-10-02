@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/Wordmark";
 const LINKS = [
   { href: "/#product", label: "Product" },
   { href: "/#solutions", label: "Solution" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/#pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
 ];
 
@@ -27,6 +27,7 @@ export function SiteHeader() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hash, setHash] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
@@ -36,7 +37,11 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => {
+    const read = () => setHash(window.location.hash);
+    read();
+    window.addEventListener("hashchange", read);
     setOpen(false);
+    return () => window.removeEventListener("hashchange", read);
   }, [path]);
 
   return (
@@ -53,7 +58,7 @@ export function SiteHeader() {
           aria-label="Primary"
         >
           {LINKS.map((item) => {
-            const active = item.href === "/pricing" && path === "/pricing";
+            const active = hash.length > 1 && item.href.endsWith(hash);
             return (
               <Link
                 key={item.href}
@@ -89,7 +94,9 @@ export function SiteHeader() {
               />
             </span>
           </button>
-          <StartLink />
+          <div className="hidden sm:block">
+            <StartLink />
+          </div>
         </div>
       </div>
 

@@ -4,7 +4,7 @@ import { Wordmark } from "@/components/Wordmark";
 export function SiteFooter() {
   return (
     <footer className="border-t border-line">
-      <div className="flex h-16 w-full items-center justify-between gap-6 px-5 md:px-8">
+      <div className="flex min-h-16 w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3 md:px-8">
         <div className="flex shrink-0 items-center gap-4">
           <Wordmark className="h-7 w-auto" />
           <a href="https://x.com/chrislernunes" aria-label="X" className="text-mute transition-colors hover:text-text">

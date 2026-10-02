@@ -68,7 +68,7 @@ export function Pricing({ onBack }: { onBack?: () => void }) {
           ‹ Back
         </button>
       )}
-      <h1 className="mt-6 text-center font-serif text-5xl font-medium tracking-tight">Pricing</h1>
+      <h1 className="text-center font-serif text-4xl font-medium tracking-tight sm:text-5xl">Pricing</h1>
 
       <div className="mt-6 flex justify-center">
         <div className="inline-flex rounded-full border border-line bg-ink-900 p-1">

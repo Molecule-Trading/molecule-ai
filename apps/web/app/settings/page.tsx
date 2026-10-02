@@ -57,7 +57,7 @@ function SettingsInner() {
   useEffect(() => {
     const t = params.get("tab");
     if (t === "brokerages" || t === "pricing") {
-      router.replace("/pricing");
+      router.replace("/#pricing");
       return;
     }
     else if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
@@ -260,7 +260,7 @@ function SettingsInner() {
                   <p className="text-sm">{plan === "pro" ? "Pro" : "No active subscription."}</p>
                   <button
                     type="button"
-                    onClick={() => router.push("/pricing")}
+                    onClick={() => router.push("/#pricing")}
                     className="mt-4 rounded-lg bg-text px-4 py-2 text-sm font-medium text-ink-950"
                   >
                     {plan === "pro" ? "Manage plan" : "Subscribe"}
