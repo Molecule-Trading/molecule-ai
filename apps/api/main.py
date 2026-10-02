@@ -36,6 +36,7 @@ app.add_middleware(
 
 class HypothesisIn(BaseModel):
     hypothesis: str = Field(min_length=8)
+    attachment: str | None = None
 
 
 class StrategyIn(BaseModel):
@@ -69,7 +70,7 @@ def inspect(venue: str, instrument: str):
 
 @app.post("/research")
 def research(body: HypothesisIn):
-    return service.start_research(body.hypothesis)
+    return service.start_research(body.hypothesis, body.attachment)
 
 
 @app.get("/runs")

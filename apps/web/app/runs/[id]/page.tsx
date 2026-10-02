@@ -6,9 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
 import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
-import { addToBook, hideStrategy, loadBook } from "@/lib/desk";
+import { addToBook, hideStrategy, loadBook, loadDeskRun } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
-import { bookIdOf, clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
+import { replay, sliceReplay, splitReplay, type TapeDay } from "@/lib/desk/engine";
+import { ASSUMPTIONS, bookIdOf, clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
 
 const SPANS: Span[] = ["1Y", "3Y", "5Y", "MAX"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -28,14 +29,37 @@ export default function RunDetailPage() {
   const [cal, setCal] = useState(false);
 
   useEffect(() => {
-    api<Run>(`/runs/${id}`).then(setRun).catch((e) => setErr(String(e)));
+    const local = loadDeskRun(id);
+    api<Run>(`/runs/${id}`)
+      .then((remote) => {
+        const remoteTape = Array.isArray(remote?.results?.tape) && remote.results.tape.length > 0;
+        if (remoteTape) setRun(remote);
+        else if (local && (local.results?.tape?.length || local.status === "FAILED" || local.status === "COMPLETED")) setRun(local);
+        else if (remote && typeof remote.hypothesis === "string") setRun(remote);
+        else if (local) setRun(local);
+        else setErr(remote?.error || "This test was not found.");
+      })
+      .catch((e) => {
+        if (local) setRun(local);
+        else setErr(String(e));
+      });
     setHeld(loadBook().some((p) => p.runId === id));
   }, [id]);
 
-  const book = bookIdOf(id);
-  const full = useMemo(() => quote("MAX", fee, slip, book), [fee, slip, book]);
-  const view = useMemo(() => clip(full.bars, full.trades, full.closed, from, to), [full, from, to]);
-  const split = useMemo(() => splitOf(view.bars, book), [view.bars, book]);
+  const tape = (Array.isArray(run?.results?.tape) ? run?.results?.tape : null) as TapeDay[] | null;
+  const live = Boolean(tape && tape.length > 0);
+  const sample = !live && run?.recorded_fixture === true && run.status === "COMPLETED";
+  const book = bookIdOf(sample ? id : "");
+  const sampleFull = useMemo(() => quote("MAX", fee, slip, book), [fee, slip, book]);
+  const liveFull = useMemo(() => (live && tape ? replay(tape, fee, slip) : null), [live, tape, fee, slip]);
+  const full = liveFull ?? sampleFull;
+  const sampleView = useMemo(() => clip(sampleFull.bars, sampleFull.trades, sampleFull.closed, from, to), [sampleFull, from, to]);
+  const liveView = useMemo(() => (liveFull ? sliceReplay(liveFull, from, to) : null), [liveFull, from, to]);
+  const view = liveView ?? sampleView;
+  const split = useMemo(
+    () => (liveView ? splitReplay(liveView.bars, liveView.closed) : splitOf(view.bars, book)),
+    [liveView, view.bars, book],
+  );
   const fan = useMemo(() => fanOf(view.bars), [view.bars]);
   const years = useMemo(() => yearRows(view.bars), [view.bars]);
   const dist = useMemo(() => histOf(view.rets), [view.rets]);
@@ -62,6 +86,21 @@ export default function RunDetailPage() {
 
   if (err) return <PageShell><div className="text-sm text-red-400">{err}</div></PageShell>;
   if (!run) return <PageShell><div className="text-sm text-mute">Loading strategy…</div></PageShell>;
+  if (!live && !sample) {
+    return (
+      <PageShell>
+        <Link href="/runs" className="text-sm text-mute transition-colors hover:text-text">← Strategies</Link>
+        <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight">{strategyTitle(run)}</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mute">{run.hypothesis}</p>
+        <div className="mt-6 rounded-xl border border-red-500/40 bg-ink-900 px-4 py-4 text-sm text-red-300">
+          {run.error || "This request was not tested. No curve was drawn from a sample book."}
+        </div>
+      </PageShell>
+    );
+  }
+
+  const assumptions = live && Array.isArray(run.results?.assumptions) ? run.results.assumptions : ASSUMPTIONS;
+  const untested: string[] = live && Array.isArray(run.results?.untested) ? run.results.untested : [];
 
   return (
     <PageShell>
@@ -71,6 +110,9 @@ export default function RunDetailPage() {
             <Link href="/runs" className="text-sm text-mute transition-colors hover:text-text">← Strategies</Link>
             <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight md:text-4xl">{strategyTitle(run)}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mute">{run.hypothesis}</p>
+            {untested.length > 0 && (
+              <p className="mt-3 max-w-3xl text-sm text-amber-200/90">Not tested: {untested.join(" ")}</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={removeStrategy} className="rounded-full border border-line px-4 py-2 text-sm text-red-400">
@@ -121,6 +163,17 @@ export default function RunDetailPage() {
             <input type="number" step="0.01" value={slip} onChange={(e) => setSlip(Number(e.target.value))} className="w-16 rounded-md border border-line bg-ink-950 px-2 py-1 font-mono text-text" />
           </label>
         </div>
+
+        {live && (
+          <section className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+            {assumptions.map((row: [string, string]) => (
+              <div key={row[0]} className="bg-ink-950 px-3 py-2">
+                <div className="font-mono text-[10px] uppercase tracking-wide text-mute">{row[0]}</div>
+                <div className="mt-1 text-xs text-text">{row[1]}</div>
+              </div>
+            ))}
+          </section>
+        )}
 
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4 xl:grid-cols-6">
           <Stat label="CAGR" value={pct2(a.cagr)} tone={toneOf(a.cagr)} />

@@ -5,8 +5,34 @@ import Link from "next/link";
 import { PageShell } from "@/components/PageShell";
 import { DrawdownChart, EquityChart } from "@/components/Charts";
 import { n, pct } from "@/lib/format";
-import { loadBook, removeFromBook, setWeight, type Sleeve } from "@/lib/desk";
-import { bookIdOf, portfolioWeighted } from "@/lib/sampleBook";
+import { loadBook, loadDeskRun, removeFromBook, setWeight, type Sleeve } from "@/lib/desk";
+import { replay } from "@/lib/desk/engine";
+import { bookIdOf, metricsOf, portfolioWeighted, quote, type Bar } from "@/lib/sampleBook";
+
+function blendDated(parts: { weight: number; bars: { t: string; equity: number }[] }[]) {
+  const live = parts.filter((p) => p.weight > 0 && p.bars.length > 1);
+  if (!live.length) return { bars: [] as Bar[], metrics: null };
+  const sum = live.reduce((s, p) => s + p.weight, 0);
+  const dates = [...new Set(live.flatMap((p) => p.bars.map((b) => b.t)))].sort();
+  const maps = live.map((p) => new Map(p.bars.map((b) => [b.t, b.equity])));
+  const last = live.map((p) => p.bars[0].equity);
+  let equity = 100000;
+  let peak = equity;
+  const bars: Bar[] = [];
+  for (const t of dates) {
+    let r = 0;
+    live.forEach((p, k) => {
+      const mark = maps[k].get(t);
+      if (mark == null || !last[k]) return;
+      r += (p.weight / sum) * (mark / last[k] - 1);
+      last[k] = mark;
+    });
+    equity *= 1 + r;
+    peak = Math.max(peak, equity);
+    bars.push({ t, equity, drawdown: peak ? equity / peak - 1 : 0 });
+  }
+  return { bars, metrics: metricsOf(bars.map((b) => b.equity), []) };
+}
 
 export default function PortfolioPage() {
   const [sleeves, setSleeves] = useState<Sleeve[]>([]);
@@ -16,10 +42,15 @@ export default function PortfolioPage() {
     setSleeves(loadBook());
   }, []);
 
-  const book = useMemo(
-    () => portfolioWeighted(sleeves.map((s) => ({ book: bookIdOf(s.runId), weight: s.weight }))),
-    [sleeves],
-  );
+  const book = useMemo(() => {
+    const parts = sleeves.map((s) => {
+      const tape = loadDeskRun(s.runId)?.results?.tape;
+      if (Array.isArray(tape) && tape.length) return { weight: s.weight, bars: replay(tape, 0.1, 0.05).bars, live: true };
+      return { weight: s.weight, bars: quote("MAX", 0.1, 0.05, bookIdOf(s.runId)).bars, live: false };
+    });
+    if (!parts.some((p) => p.live)) return portfolioWeighted(sleeves.map((s) => ({ book: bookIdOf(s.runId), weight: s.weight })));
+    return blendDated(parts);
+  }, [sleeves]);
   const a = book.metrics;
   const total = sleeves.reduce((s, x) => s + (Number(x.weight) || 0), 0) || 1;
 

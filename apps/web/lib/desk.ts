@@ -45,6 +45,24 @@ const PLAN = "molecule.desk.plan";
 const BOOK = "molecule.desk.book";
 const HIDDEN = "molecule.desk.hidden";
 const SESSION = "molecule.desk.session";
+const RUNS = "molecule.desk.runs";
+
+export function loadDeskRuns(): import("./api").Run[] {
+  return read<import("./api").Run[]>(RUNS, []);
+}
+
+export function loadDeskRun(id: string) {
+  return loadDeskRuns().find((r) => r.id === id) || null;
+}
+
+export function saveDeskRun(run: import("./api").Run) {
+  const next = [run, ...loadDeskRuns().filter((r) => r.id !== run.id)].slice(0, 12);
+  try {
+    write(RUNS, next);
+  } catch {
+    write(RUNS, next.slice(0, 3));
+  }
+}
 
 export type Session = {
   email: string;

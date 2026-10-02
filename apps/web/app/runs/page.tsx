@@ -5,7 +5,7 @@ import Link from "next/link";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
 import { StrategyCard } from "@/components/StrategyCard";
-import { hideStrategy, loadBook, loadHidden } from "@/lib/desk";
+import { hideStrategy, loadBook, loadDeskRuns, loadHidden } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
 
 export default function RunsPage() {
@@ -17,8 +17,12 @@ export default function RunsPage() {
 
   useEffect(() => {
     api<{ runs: Run[] }>("/runs")
-      .then((r) => setRuns(r.runs))
-      .catch(() => setRuns([]));
+      .then((r) => {
+        const remote = Array.isArray(r.runs) ? r.runs : [];
+        const seen = new Set(remote.map((item) => item.id));
+        setRuns([...loadDeskRuns().filter((item) => !seen.has(item.id)), ...remote]);
+      })
+      .catch(() => setRuns(loadDeskRuns()));
     setBookIds(loadBook().map((p) => p.runId));
     setHidden(loadHidden());
   }, []);

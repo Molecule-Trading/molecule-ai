@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hostedResponse } from "@/lib/hosted";
+import { runDesk } from "@/lib/desk/run";
+
+export const maxDuration = 60;
 
 async function handle(req: NextRequest, path: string[]) {
   const rel = "/" + path.join("/");
@@ -19,6 +22,18 @@ async function handle(req: NextRequest, path: string[]) {
       status: res.status,
       headers: { "Content-Type": res.headers.get("Content-Type") || "application/json" },
     });
+  }
+  if (req.method === "POST" && rel === "/research") {
+    let hypothesis = "";
+    let attachment: string | undefined;
+    try {
+      const body = await req.json();
+      hypothesis = typeof body?.hypothesis === "string" ? body.hypothesis : "";
+      attachment = typeof body?.attachment === "string" ? body.attachment : undefined;
+    } catch {
+      hypothesis = "";
+    }
+    return NextResponse.json(await runDesk(hypothesis, attachment));
   }
   let hypothesis: string | undefined;
   if (req.method === "POST") {

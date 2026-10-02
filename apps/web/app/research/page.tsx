@@ -4,9 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
-import { loadProfile, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
+import { loadProfile, saveDeskRun, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
 
-type Attachment = { name: string; size: number };
+type Attachment = { name: string; size: number; text: string };
 
 type SpeechRec = {
   lang: string;
@@ -40,10 +40,13 @@ export default function ResearchPage() {
     return first ? `Let’s start building, ${first}` : "Let’s start building";
   }, [name]);
 
-  function onFiles(list: FileList | null) {
+  async function onFiles(list: FileList | null) {
     if (!list?.length) return;
-    const next = Array.from(list).map((f) => ({ name: f.name, size: f.size }));
-    setFiles((prev) => [...prev, ...next].slice(0, 6));
+    const next: Attachment[] = [];
+    for (const file of Array.from(list)) {
+      next.push({ name: file.name, size: file.size, text: await readFile(file) });
+    }
+    setFiles((prev) => [...prev, ...next].slice(0, 4));
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -78,6 +81,7 @@ export default function ResearchPage() {
     setBusy(true);
     setError(null);
     const note = files.length ? `\n\nAttached: ${files.map((f) => f.name).join(", ")}` : "";
+    const attachment = files.map((f) => `# ${f.name}\n${f.text}`).join("\n\n").slice(0, 120000);
     const chat: Chat = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `c-${Date.now()}`,
       title: titleFromHypothesis(hypothesis),
@@ -90,8 +94,9 @@ export default function ResearchPage() {
     try {
       const run = await api<Run>("/research", {
         method: "POST",
-        body: JSON.stringify({ hypothesis }),
+        body: JSON.stringify({ hypothesis, attachment: attachment || undefined }),
       });
+      saveDeskRun(run);
       upsertChat({ ...chat, runId: run.id });
       router.push(`/runs/${run.id}`);
     } catch (e: unknown) {
@@ -161,8 +166,9 @@ export default function ResearchPage() {
               ref={fileRef}
               type="file"
               multiple
+              accept=".txt,.md,.csv,.json,.pdf,.tex"
               className="hidden"
-              onChange={(e) => onFiles(e.target.files)}
+              onChange={(e) => void onFiles(e.target.files)}
             />
             <div className="flex items-center gap-3">
               <span className="rounded-md border border-line px-2 py-1 text-xs text-mute">molecule 1.0</span>
@@ -182,6 +188,14 @@ export default function ResearchPage() {
       </div>
     </PageShell>
   );
+}
+
+async function readFile(file: File) {
+  const raw = await file.text();
+  if (!file.name.toLowerCase().endsWith(".pdf")) return raw.slice(0, 120000);
+  const chunks = raw.replace(/[^\t\n\r\x20-\x7e]/g, " ").match(/[A-Za-z][A-Za-z0-9 ,.:;'"()%+\-]{40,}/g) || [];
+  const text = chunks.join("\n").slice(0, 120000);
+  return text.length > 200 ? text : `[Could not read text out of ${file.name}. Paste the method into the chat.]`;
 }
 
 function Paperclip() {

@@ -38,6 +38,7 @@ export function StrategyCard({
         <div className="flex gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-mute">
           {inPortfolio && <span>In portfolio</span>}
           {backtested && <span>Backtested</span>}
+          {run.status === "FAILED" && <span>Failed</span>}
           {run.status === "BLOCKED" && <span>Blocked</span>}
         </div>
         {onDelete && (

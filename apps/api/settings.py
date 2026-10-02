@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     xai_api_key: str = ""
     xai_model: str = "grok-4"
     xai_api_base: str = "https://api.x.ai/v1"
+    alpaca_api_key_id: str = ""
+    alpaca_api_secret_key: str = ""
     data_dir: str = str(ROOT / "var" / "data")
     duckdb_path: str = str(ROOT / "var" / "molecule.duckdb")
 

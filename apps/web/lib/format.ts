@@ -25,7 +25,7 @@ export function strategyTicker(run: Run) {
   const spec = run.strategy_spec || run.results?.strategy || {};
   const ref = spec.universe?.reference || {};
   const tgt = spec.universe?.target || {};
-  const raw = String(ref.symbol || tgt.ticker || tgt.market_id || tgt.symbol || "").toUpperCase();
+  const raw = String(spec.symbol || ref.symbol || tgt.ticker || tgt.market_id || tgt.symbol || "").toUpperCase();
   if (!raw) return "STRAT";
   return raw.replace(/USDT$/, "").slice(0, 8);
 }

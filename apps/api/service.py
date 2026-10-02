@@ -109,10 +109,69 @@ class ResearchService:
         m = metas[0]
         return {"available": True, **self.catalog.summarize(m.dataset_id)}
 
-    def start_research(self, hypothesis: str) -> dict:
+    def start_research(self, hypothesis: str, attachment: str | None = None) -> dict:
         rec = self.store.create(hypothesis)
-        self._execute_run(rec["id"], hypothesis)
+        self._execute_desk(rec["id"], hypothesis, attachment)
         return self.store.get(rec["id"])  # type: ignore
+
+    def _execute_desk(self, run_id: str, hypothesis: str, attachment: str | None) -> None:
+        """Chat tests go through xAI for the rule and Alpaca for the prices.
+
+        Missing keys fail the run. They never fall back to a sample book.
+        """
+        from engine.desk.pipeline import run_thesis
+
+        self.store.update(run_id, status=ResearchRunStatus.RUNNING.value, stage=ResearchStage.RUNNING_BACKTEST.value)
+        started = datetime.utcnow()
+        try:
+            out = run_thesis(
+                hypothesis,
+                xai_key=self.settings.xai_api_key,
+                xai_model=self.settings.xai_model,
+                xai_base=self.settings.xai_api_base,
+                alpaca_key=self.settings.alpaca_api_key_id,
+                alpaca_secret=self.settings.alpaca_api_secret_key,
+                attachment=attachment,
+            )
+            spec = dict(out["spec"])
+            symbol = out["symbol"]
+            spec["universe"] = {
+                "reference": {"symbol": symbol},
+                "target": {"ticker": symbol, "symbol": symbol},
+            }
+            elapsed = (datetime.utcnow() - started).total_seconds()
+            self.store.update(
+                run_id,
+                status=ResearchRunStatus.COMPLETED.value,
+                stage=ResearchStage.INTERPRETING.value,
+                strategy_spec=spec,
+                results={
+                    "tape": out["tape"],
+                    "analytics": out["analytics"],
+                    "assumptions": out["assumptions"],
+                    "untested": out["untested"],
+                    "notes": out["notes"],
+                    "engine": "desk-daily-1",
+                    "symbol": symbol,
+                    "rows": out["rows"],
+                },
+                ai_analysis=out["notes"] or f"Daily test of {symbol}. Figures come from the price path, not from the model.",
+                engine_version=ENGINE_VERSION,
+                data_sources=[f"alpaca:{symbol}"],
+                data_period=f"{out['tape'][0]['t']}/{out['tape'][-1]['t']}" if out["tape"] else None,
+                synthetic=False,
+                completed_at=datetime.utcnow().isoformat(),
+                runtime=elapsed,
+                error=None,
+            )
+        except Exception as exc:
+            self.store.update(
+                run_id,
+                status=ResearchRunStatus.FAILED.value,
+                error=str(exc)[:800],
+                completed_at=datetime.utcnow().isoformat(),
+                synthetic=False,
+            )
 
     def _execute_run(self, run_id: str, hypothesis: str) -> None:
         self.store.update(run_id, status=ResearchRunStatus.RUNNING.value)
