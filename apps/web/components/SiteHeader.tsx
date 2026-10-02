@@ -27,7 +27,7 @@ export function SiteHeader() {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [hash, setHash] = useState("");
+  const [section, setSection] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 6);
@@ -37,11 +37,36 @@ export function SiteHeader() {
   }, []);
 
   useEffect(() => {
-    const read = () => setHash(window.location.hash);
-    read();
-    window.addEventListener("hashchange", read);
     setOpen(false);
-    return () => window.removeEventListener("hashchange", read);
+    const ids = ["product", "solutions", "features", "faq"];
+    const nodes = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el != null);
+    if (nodes.length === 0) {
+      setSection("");
+      return;
+    }
+    const seen = new Map<string, number>();
+    const pick = () => {
+      let best = "";
+      let score = 0;
+      seen.forEach((value, id) => {
+        if (value > score) {
+          score = value;
+          best = id;
+        }
+      });
+      setSection(score > 0 ? best : "");
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          seen.set(entry.target.id, entry.isIntersecting ? entry.intersectionRatio : 0);
+        });
+        pick();
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0, 0.15, 0.35, 0.6] },
+    );
+    nodes.forEach((node) => io.observe(node));
+    return () => io.disconnect();
   }, [path]);
 
   return (
@@ -58,7 +83,7 @@ export function SiteHeader() {
           aria-label="Primary"
         >
           {LINKS.map((item) => {
-            const active = hash.length > 1 && item.href.endsWith(hash);
+            const active = section.length > 0 && item.href === `/#${section}`;
             return (
               <Link
                 key={item.href}

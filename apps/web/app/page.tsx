@@ -231,6 +231,9 @@ export default function Home() {
             <h2 className="mt-4 max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight sm:text-5xl md:text-6xl">
               Describe the idea. The desk does the rest.
             </h2>
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-mute">
+              MoleculeAI builds the strategy, simulates it, and tests it.
+            </p>
             <div className="mt-8">
               <StrategyThread />
             </div>
