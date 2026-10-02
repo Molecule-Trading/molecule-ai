@@ -69,9 +69,11 @@ function SettingsInner() {
   }
 
   function signOut() {
-    signOutLocal();
-    setProfile({ firstName: "", lastName: "", email: "" });
-    router.push("/");
+    fetch("/api/auth/session", { method: "DELETE" }).finally(() => {
+      signOutLocal();
+      setProfile({ firstName: "", lastName: "", email: "" });
+      router.push("/");
+    });
   }
 
   function persistSafety(next: Safety) {

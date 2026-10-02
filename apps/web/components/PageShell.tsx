@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppChrome, frameClass } from "@/components/AppChrome";
-import { loadSession } from "@/lib/desk";
 
 export function PageShell({
   children,
@@ -15,7 +14,11 @@ export function PageShell({
   const router = useRouter();
 
   useEffect(() => {
-    if (!loadSession()) router.replace("/login");
+    fetch("/api/auth/session")
+      .then((r) => {
+        if (!r.ok) router.replace("/login");
+      })
+      .catch(() => router.replace("/login"));
   }, [router]);
 
   return (
