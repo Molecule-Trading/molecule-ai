@@ -22,18 +22,20 @@ Schema:
   "notes": "what is being tested",
   "untested": ["parts of the thesis daily prices cannot decide"]
 }
-Rule kind is one of: always, sma_cross, return_gt, return_lt, price_above_sma, price_below_sma, vol_below_median, vol_above_median, breakout_high, breakdown_low, rsi_lt, rsi_gt, event_bias.
+Rule kind is one of: always, sma_cross, sma_cross_down, return_gt, return_lt, price_above_sma, price_below_sma, vol_below_median, vol_above_median, breakout_high, breakdown_low, rsi_lt, rsi_gt, event_bias.
 threshold is a return fraction (0.01 = 1%), an RSI level, or 1/-1 for event_bias. stop_loss, take_profit, trailing_stop are fractions (0.02 = 2%).
+sma_cross is a close crossing above its average. sma_cross_down is a close crossing under its average. Shorts use sma_cross_down, price_below_sma, breakdown_low, rsi_gt, or return_lt. Never use sma_cross to open a short.
 Use exit_mode reverse when the position should stay open only while the entry rule is true.
 A cross or breakout is true for one session only. If the trade should stay open after that cross, use price_above_sma or price_below_sma with exit_mode reverse, or use exit_mode bracket with a stop, target, or trail.
-Use bracket when the thesis is an entry plus stop, target, or trailing stop.
-Use signal when exit_rules are the exit.
+Use bracket when the thesis is an entry plus stop, target, or trailing stop and there is no separate exit rule.
+Use signal when exit_rules are the exit. Stops, targets, and trails still fill inside the bar.
+asset_class forex is only for a currency pair. Do not remap EURUSD or any FX pair onto a stock or ETF. Alpaca has no forex bars; the engine will refuse that test.
 If the thesis cites a speech, release, or earnings date you know, put that exact date in events and add an event_bias entry rule with threshold 1 or -1. If you do not know the date, put the reason in untested and do not invent a date.
 One symbol only. Stocks use a ticker. Crypto uses BTC/USD. Forex uses EURUSD.
 window is sessions, except event_bias where window is calendar days after the event, including the event date.
 Do not put a number you were not given into notes.`;
 
-const ONE_BAR = new Set(["sma_cross", "breakout_high", "breakdown_low"]);
+const ONE_BAR = new Set(["sma_cross", "sma_cross_down", "breakout_high", "breakdown_low"]);
 
 function fraction(name: string, value: unknown, notes: string[]) {
   if (value == null) return null;
@@ -82,7 +84,20 @@ export function normalizeSpec(input: DeskSpec): DeskSpec {
     spec.exit_mode = "bracket";
     notes.push("A cross is one session, so the position is held with the stop or target.");
   }
-  if ((spec.exit_rules || []).length && (spec.exit_mode || "reverse") === "reverse") spec.exit_mode = "signal";
+  if ((spec.exit_rules || []).length && (spec.exit_mode || "reverse") !== "signal") {
+    spec.exit_mode = "signal";
+    notes.push("Exit rules are applied. Stops and targets still fill inside the bar.");
+  }
+  if (spec.direction === "short") {
+    let flipped = false;
+    for (const rule of spec.entry) {
+      if (rule.kind === "sma_cross") {
+        rule.kind = "sma_cross_down";
+        flipped = true;
+      }
+    }
+    if (flipped) notes.push("Short entry uses the cross under the average.");
+  }
   if (spec.direction === "both" && !(spec.entry_short || []).length) notes.push("No short entry was given, so only longs are taken.");
   const kept = [];
   for (const ev of spec.events || []) {
@@ -109,7 +124,7 @@ function normalizeSymbol(asset: string, symbol: string) {
     return raw;
   }
   if (asset === "forex") return raw.replace("/", "");
-  return raw.replace("/", "");
+  return raw.split("/").join(".");
 }
 
 async function alpacaDaily(asset: string, symbol: string, start: string, end: string, key: string, secret: string) {
@@ -122,8 +137,9 @@ async function alpacaDaily(asset: string, symbol: string, start: string, end: st
     params.set("feed", "iex");
     url = `${base}/v2/stocks/bars`;
   } else if (asset === "crypto") url = `${base}/v1beta3/crypto/us/bars`;
-  else if (asset === "forex") url = `${base}/v1beta1/forex/bars`;
-  else throw new Error(`Unsupported asset class ${asset}`);
+  else throw new Error(asset === "forex"
+    ? `Alpaca publishes US stocks, ETFs, and crypto. It does not publish forex bars for ${symbol}. No curve was substituted.`
+    : `Unsupported asset class ${asset}`);
 
   const pages = async (query: URLSearchParams) => {
     const out: DeskBar[] = [];
@@ -162,7 +178,22 @@ async function alpacaDaily(asset: string, symbol: string, start: string, end: st
   return rows;
 }
 
-function assumptions(spec: DeskSpec, bars: DeskBar[], openMarked: boolean) {
+function noteEvents(spec: DeskSpec, bars: DeskBar[]) {
+  if (!bars.length || !spec.events?.length) return;
+  const first = bars[0].t;
+  const last = bars[bars.length - 1].t;
+  const windows = [...spec.entry, ...(spec.entry_short || []), ...(spec.exit_rules || [])]
+    .filter((r) => r.kind === "event_bias")
+    .map((r) => r.window || 1);
+  const span = windows.length ? Math.max(...windows) : 1;
+  const dayNum = (s: string) => Date.parse(`${s.slice(0, 10)}T00:00:00Z`);
+  for (const ev of spec.events) {
+    const day = dayNum(ev.date);
+    if (day > dayNum(last) || day + span * 86400000 < dayNum(first)) {
+      spec.untested = [...(spec.untested || []), `${ev.date} falls outside the ${first} to ${last} sample`];
+    }
+  }
+}
   const entry = spec.entry.map((r: DeskRule) => `${r.kind}(${r.window})`).join(", ") || "—";
   const risk = [
     spec.stop_loss ? `stop ${(spec.stop_loss * 100).toFixed(2)}%` : "",
@@ -255,7 +286,11 @@ export async function runDesk(hypothesis: string, attachment?: string) {
     const symbol = normalizeSymbol(spec.asset_class || "stock", spec.symbol);
     spec.symbol = symbol;
     const bars = await alpacaDaily(spec.asset_class || "stock", symbol, iso(startD), iso(endD), alpacaKey, alpacaSecret);
+    noteEvents(spec, bars);
     const tape = simulate(bars, spec).tape;
+    if (!tape.some((day) => day.fills.length)) {
+      spec.notes = `${spec.notes || ""} No order was filled. The entry never fired, or one share cost more than the cash.`.trim();
+    }
     const view = replay(tape, 0.1, 0.05);
     const analytics = view.metrics;
     return {

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from agents.grok_client import GrokClient
 from data.alpaca.bars import AlpacaBars
 from engine.desk.parse import parse_thesis
@@ -23,9 +25,13 @@ def run_thesis(
     if not alpaca_key or not alpaca_secret:
         raise RuntimeError("ALPACA_API_KEY_ID and ALPACA_API_SECRET_KEY are not set. No sample curve was substituted.")
     spec = parse_thesis(GrokClient(xai_key, xai_model, xai_base), hypothesis, attachment)
+    _cap_window(spec)
     rows = AlpacaBars(alpaca_key, alpaca_secret).daily(spec.asset_class, spec.symbol, spec.start, spec.end)
     bars = [Bar(r["t"], r["o"], r["h"], r["l"], r["c"]) for r in rows]
+    _note_events(spec, bars)
     out = simulate(bars, spec)
+    if not any(day["fills"] for day in out["tape"]):
+        spec.notes = f"{spec.notes} No order was filled. The entry never fired, or one share cost more than the cash.".strip()
     analytics = report(out["tape"])
     return {
         "tape": out["tape"],
@@ -38,6 +44,29 @@ def run_thesis(
         "rows": len(bars),
         "analytics": analytics,
     }
+
+
+def _cap_window(spec: DeskSpec) -> None:
+    end_d = date.fromisoformat(spec.end) if spec.end else date.today()
+    start_d = date.fromisoformat(spec.start) if spec.start else end_d - timedelta(days=365 * 5)
+    if (end_d - start_d).days > 365 * 15:
+        start_d = end_d - timedelta(days=365 * 15)
+        spec.notes = f"{spec.notes} Window capped at 15 years.".strip()
+    spec.start = start_d.isoformat()
+    spec.end = end_d.isoformat()
+
+
+def _note_events(spec: DeskSpec, bars: list[Bar]) -> None:
+    if not bars or not spec.events:
+        return
+    first = date.fromisoformat(bars[0].t)
+    last = date.fromisoformat(bars[-1].t)
+    windows = [r.window for group in (spec.entry, spec.entry_short, spec.exit_rules) for r in group if r.kind == "event_bias"]
+    span = max(windows) if windows else 1
+    for ev in spec.events:
+        day = date.fromisoformat(ev.date[:10])
+        if day > last or day + timedelta(days=span) < first:
+            spec.untested.append(f"{ev.date} falls outside the {bars[0].t} to {bars[-1].t} sample")
 
 
 def _assumptions(spec: DeskSpec, bars: list[Bar], analytics: dict) -> list[list[str]]:

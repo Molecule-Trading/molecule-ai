@@ -182,6 +182,10 @@ function onRule(rule: DeskRule, i: number, bars: DeskBar[], pack: Pack, events: 
     if (i < 1 || slot.sma[i] == null || slot.sma[i - 1] == null) return false;
     return bars[i].c > (slot.sma[i] as number) && bars[i - 1].c <= (slot.sma[i - 1] as number);
   }
+  if (rule.kind === "sma_cross_down") {
+    if (i < 1 || slot.sma[i] == null || slot.sma[i - 1] == null) return false;
+    return bars[i].c < (slot.sma[i] as number) && bars[i - 1].c >= (slot.sma[i - 1] as number);
+  }
   if (rule.kind === "return_gt") return slot.ret[i] != null && (slot.ret[i] as number) > (threshold ?? 0);
   if (rule.kind === "return_lt") return slot.ret[i] != null && (slot.ret[i] as number) < (threshold ?? 0);
   if (rule.kind === "price_above_sma") return slot.sma[i] != null && bars[i].c > (slot.sma[i] as number);

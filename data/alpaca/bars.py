@@ -23,7 +23,7 @@ def normalize_symbol(asset_class: str, symbol: str) -> str:
         return raw
     if asset_class == "forex":
         return raw.replace("/", "")
-    return raw.replace("/", "")
+    return raw.replace("/", ".")
 
 
 class AlpacaBars:
@@ -35,6 +35,10 @@ class AlpacaBars:
 
     def daily(self, asset_class: str, symbol: str, start: str | None, end: str | None) -> list[dict]:
         symbol = normalize_symbol(asset_class, symbol)
+        if asset_class == "forex":
+            raise AlpacaError(
+                f"Alpaca publishes US stocks, ETFs, and crypto. It does not publish forex bars for {symbol}. No curve was substituted."
+            )
         end_d = date.fromisoformat(end) if end else date.today()
         start_d = date.fromisoformat(start) if start else end_d - timedelta(days=365 * 5)
         if asset_class == "stock":
@@ -50,11 +54,6 @@ class AlpacaBars:
         elif asset_class == "crypto":
             rows = self._pages(
                 f"{self._base}/v1beta3/crypto/us/bars",
-                {"symbols": symbol, "timeframe": "1Day", "start": start_d.isoformat(), "end": end_d.isoformat(), "limit": 10000},
-            )
-        elif asset_class == "forex":
-            rows = self._pages(
-                f"{self._base}/v1beta1/forex/bars",
                 {"symbols": symbol, "timeframe": "1Day", "start": start_d.isoformat(), "end": end_d.isoformat(), "limit": 10000},
             )
         else:

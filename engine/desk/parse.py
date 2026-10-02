@@ -28,12 +28,14 @@ Schema:
   "notes": "what is being tested",
   "untested": ["parts of the thesis daily prices cannot decide"]
 }
-Rule kind is one of: always, sma_cross, return_gt, return_lt, price_above_sma, price_below_sma, vol_below_median, vol_above_median, breakout_high, breakdown_low, rsi_lt, rsi_gt, event_bias.
+Rule kind is one of: always, sma_cross, sma_cross_down, return_gt, return_lt, price_above_sma, price_below_sma, vol_below_median, vol_above_median, breakout_high, breakdown_low, rsi_lt, rsi_gt, event_bias.
 threshold is a return fraction (0.01 = 1%), an RSI level, or 1/-1 for event_bias. stop_loss, take_profit, trailing_stop are fractions (0.02 = 2%).
+sma_cross is a close crossing above its average. sma_cross_down is a close crossing under its average. Shorts use sma_cross_down, price_below_sma, breakdown_low, rsi_gt, or return_lt. Never use sma_cross to open a short.
 Use exit_mode reverse when the position should stay open only while the entry rule is true.
 A cross or breakout is true for one session only. If the trade should stay open after that cross, use price_above_sma or price_below_sma with exit_mode reverse, or use exit_mode bracket with a stop, target, or trail.
-Use bracket when the thesis is an entry plus stop, target, or trailing stop.
-Use signal when exit_rules are the exit.
+Use bracket when the thesis is an entry plus stop, target, or trailing stop and there is no separate exit rule.
+Use signal when exit_rules are the exit. Stops, targets, and trails still fill inside the bar.
+asset_class forex is only for a currency pair. Do not remap EURUSD or any FX pair onto a stock or ETF. Alpaca has no forex bars; the engine will refuse that test.
 If the thesis cites a speech, release, or earnings date you know, put that exact date in events and add an event_bias entry rule with threshold 1 or -1. If you do not know the date, put the reason in untested and do not invent a date.
 One symbol only. The symbol is the instrument that is bought or sold. Stocks use a ticker. Crypto uses BTC/USD. Forex uses EURUSD.
 stop_loss, take_profit, and trailing_stop are fractions of price (0.02 means 2 percent). window is sessions, except event_bias where window is calendar days after the event, including the event date.
@@ -68,7 +70,7 @@ def parse_thesis(client: GrokClient, hypothesis: str, attachment: str | None = N
     return spec
 
 
-_ONE_BAR = {"sma_cross", "breakout_high", "breakdown_low"}
+_ONE_BAR = {"sma_cross", "sma_cross_down", "breakout_high", "breakdown_low"}
 
 
 def normalize_spec(spec: DeskSpec) -> DeskSpec:
@@ -92,8 +94,17 @@ def normalize_spec(spec: DeskSpec) -> DeskSpec:
     if one_bar and has_risk and raw["exit_mode"] == "reverse" and not raw["exit_rules"]:
         raw["exit_mode"] = "bracket"
         notes.append("A cross is one session, so the position is held with the stop or target.")
-    if raw["exit_rules"] and raw["exit_mode"] == "reverse":
+    if raw["exit_rules"] and raw["exit_mode"] != "signal":
         raw["exit_mode"] = "signal"
+        notes.append("Exit rules are applied. Stops and targets still fill inside the bar.")
+    if raw["direction"] == "short":
+        flipped = False
+        for rule in raw["entry"]:
+            if rule["kind"] == "sma_cross":
+                rule["kind"] = "sma_cross_down"
+                flipped = True
+        if flipped:
+            notes.append("Short entry uses the cross under the average.")
     if raw["direction"] == "both" and not raw["entry_short"]:
         notes.append("No short entry was given, so only longs are taken.")
     kept = []

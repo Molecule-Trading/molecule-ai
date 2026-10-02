@@ -212,6 +212,36 @@ def test_leftover_cash_is_kept_when_price_does_not_divide():
     assert tape[2]["gross"] == 0
 
 
+def test_short_cross_sells_under_the_average_not_above_it():
+    bars = [
+        Bar("2020-01-02", 100, 100, 100, 100),
+        Bar("2020-01-03", 100, 100, 100, 100),
+        Bar("2020-01-06", 100, 100, 90, 90),
+        Bar("2020-01-07", 90, 90, 90, 90),
+        Bar("2020-01-08", 90, 90, 90, 90),
+    ]
+    spec = DeskSpec(
+        symbol="TEST",
+        direction="short",
+        entry=[Rule(kind="sma_cross", window=2)],
+        exit_mode="bracket",
+        max_hold_bars=1,
+    )
+    spec = normalize_spec(spec)
+    assert spec.entry[0].kind == "sma_cross_down"
+    fills = _fills(simulate(bars, spec)["tape"])
+    assert fills[0]["side"] == "SELL"
+    assert fills[0]["t"] == "2020-01-07"
+    assert fills[0]["price"] == 90
+
+
+def test_forex_is_refused_before_any_request():
+    from data.alpaca.bars import AlpacaBars, AlpacaError
+
+    with pytest.raises(AlpacaError, match="does not publish forex"):
+        AlpacaBars("k", "s").daily("forex", "EUR/USD", "2020-01-01", "2020-06-01")
+
+
 def test_normalize_reads_a_percent_stop_and_does_not_invent_a_date():
     spec = normalize_spec(
         DeskSpec(

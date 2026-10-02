@@ -9,6 +9,7 @@ class Rule(BaseModel):
     kind: Literal[
         "always",
         "sma_cross",
+        "sma_cross_down",
         "return_gt",
         "return_lt",
         "price_above_sma",

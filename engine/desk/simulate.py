@@ -102,6 +102,11 @@ def _on(rule: Rule, i: int, bars: list[Bar], pack: dict, events: list[tuple[str,
         if i < 1 or sma[i] is None or sma[i - 1] is None:
             return False
         return bars[i].c > sma[i] and bars[i - 1].c <= sma[i - 1]
+    if rule.kind == "sma_cross_down":
+        sma = slot["sma"]
+        if i < 1 or sma[i] is None or sma[i - 1] is None:
+            return False
+        return bars[i].c < sma[i] and bars[i - 1].c >= sma[i - 1]
     if rule.kind == "return_gt":
         val = slot["ret"][i]
         return val is not None and val > (rule.threshold if rule.threshold is not None else 0.0)
