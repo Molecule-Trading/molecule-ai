@@ -93,6 +93,25 @@ function Reveal({
 }
 
 function SignalField() {
+  const [turn, setTurn] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const start = performance.now();
+    const loop = (now: number) => {
+      setTurn(((now - start) % 28000) / 28000);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const angle = -Math.PI / 2 + turn * Math.PI * 2;
+  const dotX = 50 + Math.cos(angle) * 36;
+  const dotY = 50 + Math.sin(angle) * 36;
+  const active = Math.round(turn * INPUTS.length) % INPUTS.length;
+
   return (
     <div className="relative mx-auto aspect-square w-full max-w-[460px]">
       <svg className="absolute inset-0 h-full w-full text-line" viewBox="0 0 100 100" aria-hidden>
@@ -103,9 +122,11 @@ function SignalField() {
           return <line key={i} x1="50" y1="50" x2={50 + Math.cos(a) * 36} y2={50 + Math.sin(a) * 36} stroke="currentColor" strokeWidth="0.3" />;
         })}
       </svg>
-      <div className="signal-orbit pointer-events-none absolute inset-[14%]" aria-hidden>
-        <span className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-text shadow-[0_0_14px_rgba(232,234,237,0.85)]" />
-      </div>
+      <div
+        className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-text shadow-[0_0_14px_rgba(232,234,237,0.85)]"
+        style={{ left: `${dotX}%`, top: `${dotY}%` }}
+        aria-hidden
+      />
       <div className="absolute left-1/2 top-1/2 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-ink-950">
         <img src="/icon-32.png" alt="" className="h-8 w-8" />
       </div>
@@ -113,9 +134,10 @@ function SignalField() {
         const a = ((-90 + i * 60) * Math.PI) / 180;
         const x = 50 + Math.cos(a) * 36;
         const y = 50 + Math.sin(a) * 36;
+        const on = i === active;
         return (
           <div key={item.k} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
-            <div className={`whitespace-nowrap rounded-full border bg-ink-950 px-3.5 py-1.5 text-[13px] ${i === 0 ? "border-text/40 text-text" : "border-line text-mute"}`}>
+            <div className={`whitespace-nowrap rounded-full border bg-ink-950 px-3.5 py-1.5 text-[13px] transition-colors duration-300 ${on ? "border-text text-text" : "border-line text-mute"}`}>
               {item.label}
             </div>
           </div>
@@ -203,7 +225,8 @@ export default function Home() {
         </section>
 
         <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-6xl px-5 pb-8 pt-6 md:px-8 md:pb-16">
+          <div className="mx-auto w-full max-w-6xl px-5 pb-8 pt-10 md:px-8 md:pb-16 md:pt-16">
+            <p className="mb-6 font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Product</p>
             <StrategyThread />
           </div>
         </section>

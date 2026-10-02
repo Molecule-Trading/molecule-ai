@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DistChart, DrawdownChart, EquityChart } from "@/components/Charts";
-import { histOf, splitOf, windowOf } from "@/lib/sampleBook";
+import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
+import { fanOf, histOf, splitOf, windowOf } from "@/lib/sampleBook";
 
 const USER = "Buy when the twenty-day return is positive and volatility is falling.";
 
@@ -29,11 +29,14 @@ const vols: number[] = [];
 }
 const volDist = histOf(vols);
 const split = splitOf(view.bars);
+const fan = fanOf(view.bars);
+const step = Math.max(1, Math.ceil(view.trades.length / 4));
+const TRADES = view.trades.filter((_, i) => i % step === 0).slice(0, 4);
 
 export function StrategyThread() {
   const scroller = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
-  const last = REPLY.length + 5;
+  const last = REPLY.length + 10;
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -129,6 +132,32 @@ export function StrategyThread() {
                   <div className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
                     <Sample title="In sample" m={split.inn} />
                     <Sample title="Out of sample" m={split.out} />
+                  </div>
+                )}
+                {phase > REPLY.length + 5 && (
+                  <div className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                    <p className="mb-1 text-xs text-mute">Monte Carlo</p>
+                    <MonteCarloChart data={fan} height={200} />
+                  </div>
+                )}
+                {phase > REPLY.length + 6 && (
+                  <div className="thread-in overflow-hidden rounded-xl border border-line">
+                    <div className="grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
+                      <span>Timestamp</span>
+                      <span>Side</span>
+                      <span className="text-right">Fill</span>
+                      <span className="text-right">Qty</span>
+                    </div>
+                    {TRADES.slice(0, phase - (REPLY.length + 6)).map((trade) => (
+                      <div key={trade.trade_id} className="thread-in grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] border-t border-line px-3 py-2 font-mono text-xs">
+                        <span className="text-mute">{trade.fill_ts.slice(0, 16).replace("T", " ")}</span>
+                        <span className={trade.side === "BUY" ? "font-semibold text-emerald-400" : "font-semibold text-red-400"}>
+                          {trade.side === "BUY" ? "Entry" : "Exit"}
+                        </span>
+                        <span className="text-right">{trade.price.toFixed(2)}</span>
+                        <span className="text-right">{Math.round(trade.quantity)}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
