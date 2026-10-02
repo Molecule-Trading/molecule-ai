@@ -5,7 +5,6 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader, StartLink } from "@/components/SiteHeader";
 import { StrategyThread } from "@/components/StrategyThread";
 import { ThoughtTrace } from "@/components/ThoughtTrace";
-import { Pricing } from "@/components/Pricing";
 
 const WHY = [
   {
@@ -149,7 +148,7 @@ function SignalField() {
 }
 
 function FaqList() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <div className="border-t border-line">
@@ -198,8 +197,8 @@ export default function Home() {
         <section className="relative overflow-hidden">
           <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
           <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-5 pb-14 pt-12 md:px-8 md:pb-20 md:pt-16 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2 lg:gap-16">
-            <div>
+          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-5 pb-8 pt-10 md:px-8 md:pb-20 md:pt-16 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2 lg:gap-16 lg:pb-16">
+            <div className="flex min-h-[calc(100svh-6.5rem)] flex-col lg:min-h-0">
               <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
                 MoleculeAI
               </p>
@@ -217,7 +216,8 @@ export default function Home() {
               >
                 Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
               </p>
-              <div className="hero-in mt-8" style={{ animationDelay: "320ms" }}>
+              <ThoughtTrace compact />
+              <div className="hero-in mt-auto pt-10 lg:mt-8 lg:pt-0" style={{ animationDelay: "320ms" }}>
                 <StartLink />
               </div>
             </div>
@@ -266,10 +266,10 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-t border-line">
+        <section id="features" className="scroll-mt-20 border-t border-line">
           <div className="mx-auto grid w-full max-w-6xl items-center gap-8 px-5 py-14 md:px-8 md:py-24 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
             <Reveal>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Inputs</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Features</p>
               <h2 className="mt-4 max-w-md font-serif text-4xl font-medium leading-[1.02] tracking-tight sm:text-5xl md:text-6xl">
                 The test reads more than price.
               </h2>
@@ -292,12 +292,6 @@ export default function Home() {
             <div className="mt-12">
               <FaqList />
             </div>
-          </div>
-        </section>
-
-        <section id="pricing" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-20">
-            <Pricing />
           </div>
         </section>
       </main>

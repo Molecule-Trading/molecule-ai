@@ -10,7 +10,7 @@ const LINES = [
   "The run lands on the desk.",
 ];
 
-export function ThoughtTrace() {
+export function ThoughtTrace({ compact = false }: { compact?: boolean }) {
   const [n, setN] = useState(1);
 
   useEffect(() => {
@@ -25,25 +25,29 @@ export function ThoughtTrace() {
   }, []);
 
   return (
-    <div className="hero-in hidden w-full justify-self-end lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
-      <ol className="ml-auto flex w-full max-w-md flex-col">
+    <div
+      className={compact ? "hero-in mt-8 w-full lg:hidden" : "hero-in hidden w-full justify-self-end lg:block"}
+      style={{ animationDelay: "200ms" }}
+      aria-hidden
+    >
+      <ol className={`flex w-full flex-col ${compact ? "max-w-sm" : "ml-auto max-w-md"}`}>
         {LINES.map((line, i) => {
           const on = i < n;
           const current = i === n - 1;
           return (
-            <li key={line} className="grid grid-cols-[22px_1fr] gap-5">
+            <li key={line} className={`grid grid-cols-[22px_1fr] ${compact ? "gap-3" : "gap-5"}`}>
               <span className="flex flex-col items-center">
                 <span
-                  className={`mt-2 h-2 w-2 rounded-full transition-all duration-500 ${
+                  className={`mt-1.5 h-1.5 w-1.5 rounded-full transition-all duration-500 ${
                     on ? "bg-text" : "bg-line"
                   } ${current ? "scale-125" : ""}`}
                 />
                 {i < LINES.length - 1 && (
-                  <span className={`mt-2 h-16 w-px transition-colors duration-500 ${i < n - 1 ? "bg-text/40" : "bg-line"}`} />
+                  <span className={`mt-1.5 w-px transition-colors duration-500 ${compact ? "h-6" : "h-16"} ${i < n - 1 ? "bg-text/40" : "bg-line"}`} />
                 )}
               </span>
               <p
-                className={`pt-0.5 text-xl leading-snug transition-all duration-500 xl:text-2xl ${
+                className={`leading-snug transition-all duration-500 ${compact ? "text-sm" : "pt-0.5 text-xl xl:text-2xl"} ${
                   on ? "text-text opacity-100" : "text-mute opacity-25"
                 }`}
               >

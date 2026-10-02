@@ -8,7 +8,7 @@ import { Wordmark } from "@/components/Wordmark";
 const LINKS = [
   { href: "/#product", label: "Product" },
   { href: "/#solutions", label: "Solution" },
-  { href: "/#pricing", label: "Pricing" },
+  { href: "/#features", label: "Features" },
   { href: "/#faq", label: "FAQ" },
 ];
 

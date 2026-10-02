@@ -36,14 +36,15 @@ const TRADES = view.trades.filter((_, i) => i % step === 0).slice(0, 4);
 export function StrategyThread() {
   const scroller = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
-  const last = REPLY.length + 10;
+  const last = REPLY.length + 12;
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setPhase(last);
       return;
     }
-    const delay = phase === 0 ? 500 : phase >= last ? 4200 : 700;
+    const narrow = window.matchMedia("(max-width: 767px)").matches;
+    const delay = phase === 0 ? 600 : phase >= last ? 5200 : narrow ? 1700 : 900;
     const timer = window.setTimeout(() => setPhase((p) => (p >= last ? 0 : p + 1)), delay);
     return () => window.clearTimeout(timer);
   }, [phase, last]);
@@ -51,7 +52,14 @@ export function StrategyThread() {
   useEffect(() => {
     const el = scroller.current;
     if (!el) return;
-    el.scrollTo({ top: phase === 0 ? 0 : el.scrollHeight, behavior: phase === 0 ? "auto" : "smooth" });
+    if (phase === 0) {
+      el.scrollTo({ top: 0, behavior: "auto" });
+      return;
+    }
+    const node = el.querySelector(`[data-phase="${phase}"]`);
+    if (!node) return;
+    const top = node.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop;
+    el.scrollTo({ top: Math.max(0, top - 8), behavior: "smooth" });
   }, [phase]);
 
   const lines = REPLY.slice(0, Math.max(0, phase - 1));
@@ -83,7 +91,7 @@ export function StrategyThread() {
                   </p>
                 ))}
                 {phase > REPLY.length && (
-                  <div className="thread-in grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-6">
+                  <div data-phase={REPLY.length + 1} className="thread-in grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-6">
                     <Metric k="CAGR" v={pct(m.cagr)} tone={m.cagr} />
                     <Metric k="Sharpe" v={num(m.sharpe)} tone={m.sharpe} />
                     <Metric k="Sortino" v={num(m.sortino)} tone={m.sortino} />
@@ -93,19 +101,19 @@ export function StrategyThread() {
                   </div>
                 )}
                 {phase > REPLY.length + 1 && (
-                  <div className="thread-in grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                      <p className="mb-1 text-xs text-mute">Equity curve</p>
-                      <EquityChart data={view.bars} height={200} />
-                    </div>
-                    <div className="rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                      <p className="mb-1 text-xs text-mute">Underwater Drawdown Plot</p>
-                      <DrawdownChart data={view.bars} height={200} />
-                    </div>
+                  <div data-phase={REPLY.length + 2} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                    <p className="mb-1 text-xs text-mute">Equity curve</p>
+                    <EquityChart data={view.bars} height={200} />
                   </div>
                 )}
                 {phase > REPLY.length + 2 && (
-                  <div className="thread-in grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
+                  <div data-phase={REPLY.length + 3} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                    <p className="mb-1 text-xs text-mute">Underwater Drawdown Plot</p>
+                    <DrawdownChart data={view.bars} height={200} />
+                  </div>
+                )}
+                {phase > REPLY.length + 3 && (
+                  <div data-phase={REPLY.length + 4} className="thread-in grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
                     <Metric k="Gross P&L" v={money(m.gross_pnl)} tone={m.gross_pnl} />
                     <Metric k="Net P&L" v={money(m.net_pnl)} tone={m.net_pnl} />
                     <Metric k="Start" v={plain(m.starting_equity)} />
@@ -116,39 +124,39 @@ export function StrategyThread() {
                     <Metric k="Vol" v={m.volatility == null ? "—" : pct(m.volatility)} />
                   </div>
                 )}
-                {phase > REPLY.length + 3 && (
-                  <div className="thread-in grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                      <p className="mb-1 text-xs text-mute">Return distribution</p>
-                      <DistChart data={dist} label="Days" height={180} />
-                    </div>
-                    <div className="rounded-xl border border-line bg-ink-950/50 px-3 py-3">
-                      <p className="mb-1 text-xs text-mute">Volatility distribution</p>
-                      <DistChart data={volDist} label="Sessions" height={180} />
-                    </div>
+                {phase > REPLY.length + 4 && (
+                  <div data-phase={REPLY.length + 5} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                    <p className="mb-1 text-xs text-mute">Return distribution</p>
+                    <DistChart data={dist} label="Days" height={180} />
                   </div>
                 )}
-                {phase > REPLY.length + 4 && (
-                  <div className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
+                {phase > REPLY.length + 5 && (
+                  <div data-phase={REPLY.length + 6} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                    <p className="mb-1 text-xs text-mute">Volatility distribution</p>
+                    <DistChart data={volDist} label="Sessions" height={180} />
+                  </div>
+                )}
+                {phase > REPLY.length + 6 && (
+                  <div data-phase={REPLY.length + 7} className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
                     <Sample title="In sample" m={split.inn} />
                     <Sample title="Out of sample" m={split.out} />
                   </div>
                 )}
-                {phase > REPLY.length + 5 && (
-                  <div className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
+                {phase > REPLY.length + 7 && (
+                  <div data-phase={REPLY.length + 8} className="thread-in rounded-xl border border-line bg-ink-950/50 px-3 py-3">
                     <p className="mb-1 text-xs text-mute">Monte Carlo</p>
                     <MonteCarloChart data={fan} height={200} />
                   </div>
                 )}
-                {phase > REPLY.length + 6 && (
-                  <div className="thread-in overflow-hidden rounded-xl border border-line">
+                {phase > REPLY.length + 8 && (
+                  <div data-phase={phase} className="thread-in overflow-hidden rounded-xl border border-line">
                     <div className="grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-mute">
                       <span>Timestamp</span>
                       <span>Side</span>
                       <span className="text-right">Fill</span>
                       <span className="text-right">Qty</span>
                     </div>
-                    {TRADES.slice(0, phase - (REPLY.length + 6)).map((trade) => (
+                    {TRADES.slice(0, phase - (REPLY.length + 8)).map((trade) => (
                       <div key={trade.trade_id} className="thread-in grid grid-cols-[1.4fr_0.7fr_0.8fr_0.5fr] border-t border-line px-3 py-2 font-mono text-xs">
                         <span className="text-mute">{trade.fill_ts.slice(0, 16).replace("T", " ")}</span>
                         <span className={trade.side === "BUY" ? "font-semibold text-emerald-400" : "font-semibold text-red-400"}>

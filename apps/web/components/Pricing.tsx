@@ -35,7 +35,7 @@ const PRO_FEATURES = [
   "Trade through the brokerage of your choice",
 ];
 
-export function Pricing({ onBack }: { onBack?: () => void }) {
+export function Pricing({ onBack, embedded = false }: { onBack?: () => void; embedded?: boolean }) {
   const [plan, setPlan] = useState<DeskPlan["plan"]>("free");
   const [savedCycle, setSavedCycle] = useState<DeskPlan["cycle"]>("monthly");
   const [cycle, setCycle] = useState<DeskPlan["cycle"]>("monthly");
@@ -68,7 +68,7 @@ export function Pricing({ onBack }: { onBack?: () => void }) {
           ‹ Back
         </button>
       )}
-      <h1 className="text-center font-serif text-4xl font-medium tracking-tight sm:text-5xl">Pricing</h1>
+      {!embedded && <h1 className="text-center font-serif text-4xl font-medium tracking-tight sm:text-5xl">Pricing</h1>}
 
       <div className="mt-6 flex justify-center">
         <div className="inline-flex rounded-full border border-line bg-ink-900 p-1">

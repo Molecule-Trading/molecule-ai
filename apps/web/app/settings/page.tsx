@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
+import { Pricing } from "@/components/Pricing";
 import {
-  loadPlan,
   loadProfile,
   loadSafety,
   saveProfile,
@@ -43,21 +43,19 @@ function SettingsInner() {
     killSwitch: false,
     maxNotional: "100000",
   });
-  const [plan, setPlan] = useState<"free" | "pro">("free");
   const [twoFa, setTwoFa] = useState(false);
   const [resetNote, setResetNote] = useState<string | null>(null);
 
   useEffect(() => {
     setProfile(loadProfile());
     setSafety(loadSafety());
-    setPlan(loadPlan().plan);
     setTwoFa(window.localStorage.getItem("molecule.desk.2fa") === "1");
   }, [tab]);
 
   useEffect(() => {
     const t = params.get("tab");
     if (t === "brokerages" || t === "pricing") {
-      router.replace("/#pricing");
+      setTab("billing");
       return;
     }
     else if (t && TABS.some((x) => x.id === t)) setTab(t as Tab);
@@ -248,24 +246,11 @@ function SettingsInner() {
           )}
 
           {tab === "billing" && (
-            <section className="max-w-xl">
+            <section className="max-w-3xl">
               <h1 className="font-serif text-4xl font-medium">Billing</h1>
               <p className="mt-2 text-sm text-mute">Your plan and payment method.</p>
-              <div className="mt-6 rounded-2xl border border-line bg-ink-900">
-                <div className="border-b border-line px-5 py-4">
-                  <h2 className="text-sm font-medium">Plan</h2>
-                  <p className="mt-1 text-sm text-mute">Your subscription and renewal date.</p>
-                </div>
-                <div className="px-5 py-4">
-                  <p className="text-sm">{plan === "pro" ? "Pro" : "No active subscription."}</p>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/#pricing")}
-                    className="mt-4 rounded-lg bg-text px-4 py-2 text-sm font-medium text-ink-950"
-                  >
-                    {plan === "pro" ? "Manage plan" : "Subscribe"}
-                  </button>
-                </div>
+              <div className="mt-8">
+                <Pricing embedded />
               </div>
             </section>
           )}
