@@ -29,8 +29,8 @@ Use exit_mode reverse when the position should stay open only while the entry ru
 A cross or breakout is true for one session only. If the trade should stay open after that cross, use price_above_sma or price_below_sma with exit_mode reverse, or use exit_mode bracket with a stop, target, or trail.
 Use bracket when the thesis is an entry plus stop, target, or trailing stop and there is no separate exit rule.
 Use signal when exit_rules are the exit. Stops, targets, and trails still fill inside the bar.
-asset_class forex is only for a currency pair. Do not remap EURUSD or any FX pair onto a stock or ETF. Alpaca has no forex bars; the engine will refuse that test.
-If the thesis cites a speech, release, or earnings date you know, put that exact date in events and add an event_bias entry rule with threshold 1 or -1. If you do not know the date, put the reason in untested and do not invent a date.
+asset_class forex is a currency pair such as EURUSD. Never remap a forex pair onto a stock or an ETF.
+If the thesis cites a speech, Fed release, SEC release, or earnings date, put the real date in events and add an event_bias entry rule with threshold 1 or -1. Use a date you know. If you do not know it, put the reason in untested and do not invent one.
 One symbol only. Stocks use a ticker. Crypto uses BTC/USD. Forex uses EURUSD.
 window is sessions, except event_bias where window is calendar days after the event, including the event date.
 Do not put a number you were not given into notes.`;
@@ -137,9 +137,41 @@ async function alpacaDaily(asset: string, symbol: string, start: string, end: st
     params.set("feed", "iex");
     url = `${base}/v2/stocks/bars`;
   } else if (asset === "crypto") url = `${base}/v1beta3/crypto/us/bars`;
-  else throw new Error(asset === "forex"
-    ? `Alpaca publishes US stocks, ETFs, and crypto. It does not publish forex bars for ${symbol}. No curve was substituted.`
-    : `Unsupported asset class ${asset}`);
+  else if (asset === "forex") {
+    const slash = symbol.length === 6 ? `${symbol.slice(0, 3)}/${symbol.slice(3)}` : symbol;
+    params.set("symbols", slash);
+    url = `${base}/v1beta1/forex/bars`;
+  } else throw new Error(`Unsupported asset class ${asset}`);
+
+  const take = (body: { bars?: Record<string, Record<string, number | string>[]> | Record<string, number | string>[]; quotes?: Record<string, number | string>[]; next_page_token?: string }) => {
+    const lists: Record<string, number | string>[][] = [];
+    const bars = body.bars;
+    if (Array.isArray(bars)) lists.push(bars);
+    else if (bars && typeof bars === "object") {
+      const keys = Object.keys(bars);
+      const wanted = symbol.replace(/[/-]/g, "");
+      for (const key of keys) {
+        const val = bars[key];
+        if (!Array.isArray(val)) continue;
+        if (key.replace(/[/-]/g, "") === wanted || keys.length === 1) lists.push(val);
+      }
+    }
+    if (Array.isArray(body.quotes)) lists.push(body.quotes);
+    const out: DeskBar[] = [];
+    for (const rows of lists) {
+      for (const row of rows) {
+        const t = String(row.t || row.timestamp || row.time || "").slice(0, 10);
+        const c = Number(row.c ?? row.close ?? row.price);
+        if (t.length < 10 || !Number.isFinite(c) || c <= 0) continue;
+        const o = Number(row.o ?? row.open ?? c);
+        const h = Number(row.h ?? row.high ?? Math.max(o, c));
+        const l = Number(row.l ?? row.low ?? Math.min(o, c));
+        if (![o, h, l, c].every((n) => Number.isFinite(n) && n > 0)) continue;
+        out.push({ t, o, h: Math.max(h, o, c), l: Math.min(l, o, c), c });
+      }
+    }
+    return out;
+  };
 
   const pages = async (query: URLSearchParams) => {
     const out: DeskBar[] = [];
@@ -151,18 +183,7 @@ async function alpacaDaily(asset: string, symbol: string, start: string, end: st
       if (res.status === 403 && q.has("feed")) return [];
       if (!res.ok) throw new Error(`Alpaca ${res.status} for ${symbol}: ${(await res.text()).slice(0, 240)}`);
       const body = await res.json();
-      const blob = body.bars || {};
-      let rows = blob[symbol] || [];
-      if (!rows.length && Object.keys(blob).length === 1) rows = Object.values(blob)[0] || [];
-      for (const row of rows as Record<string, number | string>[]) {
-        const t = String(row.t || "").slice(0, 10);
-        const o = Number(row.o);
-        const h = Number(row.h);
-        const l = Number(row.l);
-        const c = Number(row.c);
-        if (![o, h, l, c].every((n) => Number.isFinite(n) && n > 0)) continue;
-        out.push({ t, o, h, l, c });
-      }
+      out.push(...take(body));
       token = body.next_page_token || "";
       if (!token) break;
     }
@@ -174,7 +195,22 @@ async function alpacaDaily(asset: string, symbol: string, start: string, end: st
     params.delete("feed");
     rows = await pages(params);
   }
-  if (rows.length < 3) throw new Error(`Alpaca returned ${rows.length} daily bars for ${symbol}`);
+  if (rows.length < 3 && asset === "forex") {
+    const pair = symbol.replace(/[/-]/g, "");
+    if (pair.length !== 6) throw new Error(`No OHLC for ${symbol}. An ETF was not substituted.`);
+    const res = await fetch(`https://api.frankfurter.app/${start}..${end}?from=${pair.slice(0, 3)}&to=${pair.slice(3)}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`No OHLC for ${symbol}. An ETF was not substituted.`);
+    const body = await res.json();
+    const rates = body.rates || {};
+    rows = Object.keys(rates).sort().flatMap((day) => {
+      const px = Number(rates[day]?.[pair.slice(3)]);
+      if (!Number.isFinite(px) || px <= 0) return [];
+      return [{ t: day.slice(0, 10), o: px, h: px, l: px, c: px }];
+    });
+  }
+  if (rows.length < 3) throw new Error(asset === "forex"
+    ? `No OHLC for ${symbol}. An ETF was not substituted.`
+    : `Alpaca returned ${rows.length} daily bars for ${symbol}`);
   return rows;
 }
 
@@ -212,7 +248,7 @@ function noteEvents(spec: DeskSpec, bars: DeskBar[]) {
     ["Fill", "signal at close, fill next open; stop before target"],
     ["Costs", "not in the tape; sliders default to 0.10% fee and 0.05% slippage per fill"],
     ["Capital", "100,000"],
-    ["Data", "Alpaca daily bars"],
+    ["Data", "Alpaca OHLC, drawn as a line of closes"],
   ];
   if (openMarked) rows.push(["Open trade", "still open, marked to the last close"]);
   if (spec.untested?.length) rows.push(["Not tested", spec.untested.join("; ")]);

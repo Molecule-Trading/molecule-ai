@@ -1,44 +1,74 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/Wordmark";
+import { StartLink } from "@/components/SiteHeader";
+
+const COLS = [
+  {
+    title: "Product",
+    links: [
+      { href: "/#product", label: "Research" },
+      { href: "/#solutions", label: "Solution" },
+      { href: "/#features", label: "Features" },
+    ],
+  },
+  {
+    title: "Desk",
+    links: [
+      { href: "/pricing", label: "Pricing" },
+      { href: "/contact", label: "Contact" },
+      { href: "/login", label: "Get started" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { href: "/terms", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+    ],
+  },
+];
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line">
-      <div className="flex min-h-16 w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3 md:px-8">
-        <div className="flex shrink-0 items-center gap-4">
-          <a href="https://x.com/chrislernunes" aria-label="X" className="text-mute transition-colors hover:text-text">
-            <XIcon />
-          </a>
-          <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="text-mute transition-colors hover:text-text">
-            <Mail />
-          </a>
-          <span className="text-xs text-mute">© 2026 MoleculeAI</span>
+    <footer className="mt-auto border-t border-line bg-ink-900/40">
+      <div className="mx-auto w-full max-w-6xl px-5 py-12 md:px-8 md:py-16">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="max-w-sm">
+            <Wordmark className="h-7 w-auto" />
+            <p className="mt-4 text-sm leading-relaxed text-mute">
+              Describe the idea. The desk builds the rule, draws the line, and tests it.
+            </p>
+          </div>
+          <StartLink />
         </div>
-        <nav className="flex items-center gap-x-6 text-sm text-mute" aria-label="Legal">
-          <Link href="/terms" className="transition-colors hover:text-text">
-            Terms
-          </Link>
-          <Link href="/privacy" className="transition-colors hover:text-text">
-            Privacy
-          </Link>
-        </nav>
+        <div className="mt-10 grid grid-cols-3 gap-6 border-t border-line pt-8">
+          {COLS.map((col) => (
+            <div key={col.title}>
+              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">{col.title}</p>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href} className="text-sm text-text/90 transition-colors hover:text-text">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
+          <p className="text-xs text-mute">© 2026 MoleculeAI</p>
+          <div className="flex items-center gap-4">
+            <a href="https://x.com/chrislernunes" className="text-xs text-mute transition-colors hover:text-text">
+              X
+            </a>
+            <a href="mailto:nuneschrisler@gmail.com" className="text-xs text-mute transition-colors hover:text-text">
+              Email
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
-  );
-}
-
-function XIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M14.7 10.3 22.4 1.5h-1.8l-6.7 7.6L8.4 1.5H1.6l8.1 11.5L1.6 22.5h1.8l7.1-8.1 5.7 8.1h6.8l-8.3-12.2Zm-2.5 2.8-.8-1.1L4.1 2.9h2.8l5.2 7.3.8 1.1 6.8 9.5h-2.8l-5.5-7.7Z" />
-    </svg>
-  );
-}
-
-function Mail() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M4 7l8 6 8-6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

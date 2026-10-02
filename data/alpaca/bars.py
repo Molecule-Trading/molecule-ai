@@ -26,6 +26,63 @@ def normalize_symbol(asset_class: str, symbol: str) -> str:
     return raw.replace("/", ".")
 
 
+def _num(row: dict, *keys: str) -> float | None:
+    for key in keys:
+        if key not in row or row[key] is None:
+            continue
+        try:
+            return float(row[key])
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def extract_ohlc(body, symbol: str) -> list[dict]:
+    """Pull a close line out of a bars payload or any OHLC list. Missing open/high/low become the close."""
+    lists: list[list] = []
+    if isinstance(body, list):
+        lists.append(body)
+    elif isinstance(body, dict):
+        bars = body.get("bars")
+        wanted = symbol.replace("/", "").replace("-", "")
+        if isinstance(bars, dict):
+            for key, val in bars.items():
+                if not isinstance(val, list):
+                    continue
+                flat = str(key).replace("/", "").replace("-", "")
+                if flat == wanted or len(bars) == 1:
+                    lists.append(val)
+        elif isinstance(bars, list):
+            lists.append(bars)
+        for key in ("quotes", "ohlc", "data", "results"):
+            val = body.get(key)
+            if isinstance(val, list):
+                lists.append(val)
+            elif isinstance(val, dict):
+                for item in val.values():
+                    if isinstance(item, list):
+                        lists.append(item)
+    out: list[dict] = []
+    seen: set[str] = set()
+    for rows in lists:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            t = str(row.get("t") or row.get("timestamp") or row.get("time") or "")[:10]
+            close = _num(row, "c", "close", "price")
+            if len(t) < 10 or close is None or close <= 0:
+                continue
+            o = _num(row, "o", "open") or close
+            h = _num(row, "h", "high") or max(o, close)
+            l = _num(row, "l", "low") or min(o, close)
+            if min(o, h, l, close) <= 0 or t in seen:
+                continue
+            seen.add(t)
+            out.append({"t": t, "o": o, "h": max(h, o, close), "l": min(l, o, close), "c": close})
+    out.sort(key=lambda r: r["t"])
+    return out
+
+
 class AlpacaBars:
     def __init__(self, key_id: str, secret: str, base: str = "https://data.alpaca.markets"):
         if not key_id or not secret:
@@ -35,13 +92,11 @@ class AlpacaBars:
 
     def daily(self, asset_class: str, symbol: str, start: str | None, end: str | None) -> list[dict]:
         symbol = normalize_symbol(asset_class, symbol)
-        if asset_class == "forex":
-            raise AlpacaError(
-                f"Alpaca publishes US stocks, ETFs, and crypto. It does not publish forex bars for {symbol}. No curve was substituted."
-            )
         end_d = date.fromisoformat(end) if end else date.today()
         start_d = date.fromisoformat(start) if start else end_d - timedelta(days=365 * 5)
-        if asset_class == "stock":
+        if asset_class == "forex":
+            rows = self._forex(symbol, start_d, end_d)
+        elif asset_class == "stock":
             rows = self._pages(
                 f"{self._base}/v2/stocks/bars",
                 {"symbols": symbol, "timeframe": "1Day", "start": start_d.isoformat(), "end": end_d.isoformat(), "limit": 10000, "adjustment": "all", "feed": "iex"},
@@ -59,8 +114,31 @@ class AlpacaBars:
         else:
             raise AlpacaError(f"Unsupported asset class {asset_class}")
         if len(rows) < 3:
-            raise AlpacaError(f"Alpaca returned {len(rows)} daily bars for {symbol}")
+            raise AlpacaError(f"Alpaca returned {len(rows)} daily bars for {symbol}. An ETF was not substituted.")
         return rows
+
+    def _forex(self, symbol: str, start: date, end: date) -> list[dict]:
+        slash = f"{symbol[:3]}/{symbol[3:]}" if len(symbol) == 6 else symbol
+        last = ""
+        attempts = [slash, symbol]
+        for name in attempts:
+            try:
+                rows = self._pages(
+                    f"{self._base}/v1beta1/forex/bars",
+                    {"symbols": name, "timeframe": "1Day", "start": start.isoformat(), "end": end.isoformat(), "limit": 10000},
+                )
+            except AlpacaError as exc:
+                last = str(exc)
+                if any(code in last for code in (" 400 ", " 403 ", " 404 ", "Alpaca 400", "Alpaca 403", "Alpaca 404")):
+                    continue
+                raise
+            if len(rows) >= 3:
+                return rows
+        from data.fx.closes import daily as fx_closes
+        try:
+            return fx_closes(symbol, start.isoformat(), end.isoformat())
+        except AlpacaError as exc:
+            raise AlpacaError(f"No OHLC for {symbol}. An ETF was not substituted. {exc}") from exc
 
     def _pages(self, url: str, params: dict) -> list[dict]:
         symbol = params["symbols"]
@@ -77,20 +155,7 @@ class AlpacaBars:
                 if resp.status_code >= 400:
                     raise AlpacaError(f"Alpaca {resp.status_code} for {symbol}: {resp.text[:240]}")
                 body = resp.json()
-                bars = (body.get("bars") or {}).get(symbol) or []
-                if not bars:
-                    blob = body.get("bars") or {}
-                    if len(blob) == 1:
-                        bars = next(iter(blob.values())) or []
-                for row in bars:
-                    t = str(row.get("t") or "")[:10]
-                    try:
-                        o, h, l, c = float(row["o"]), float(row["h"]), float(row["l"]), float(row["c"])
-                    except (KeyError, TypeError, ValueError):
-                        continue
-                    if min(o, h, l, c) <= 0:
-                        continue
-                    out.append({"t": t, "o": o, "h": h, "l": l, "c": c})
+                out.extend(extract_ohlc(body, symbol))
                 token = body.get("next_page_token")
                 if not token:
                     break

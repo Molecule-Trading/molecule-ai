@@ -9,7 +9,8 @@ const LINKS = [
   { href: "/#product", label: "Product" },
   { href: "/#solutions", label: "Solution" },
   { href: "/#features", label: "Features" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function StartLink({ className = "" }: { className?: string }) {
@@ -38,7 +39,7 @@ export function SiteHeader() {
 
   useEffect(() => {
     setOpen(false);
-    const ids = ["product", "solutions", "features", "faq"];
+    const ids = ["product", "solutions", "features"];
     const nodes = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el != null);
     if (nodes.length === 0) {
       setSection("");
@@ -75,7 +76,7 @@ export function SiteHeader() {
         scrolled || open ? "border-b border-line bg-ink-950/80 backdrop-blur-xl" : "border-b border-transparent"
       }`}
     >
-      <div className="relative flex h-16 items-center px-5 md:px-8">
+      <div className="relative mx-auto flex h-16 w-full max-w-6xl items-center px-5 md:px-8">
         <Wordmark className="h-7 w-auto sm:h-8" />
 
         <nav
@@ -83,7 +84,9 @@ export function SiteHeader() {
           aria-label="Primary"
         >
           {LINKS.map((item) => {
-            const active = section.length > 0 && item.href === `/#${section}`;
+            const active = item.href.startsWith("/#")
+              ? path === "/" && section.length > 0 && item.href === `/#${section}`
+              : path === item.href;
             return (
               <Link
                 key={item.href}
@@ -119,9 +122,7 @@ export function SiteHeader() {
               />
             </span>
           </button>
-          <div className="hidden sm:block">
-            <StartLink />
-          </div>
+          <StartLink className="px-3 text-xs sm:px-3.5 sm:text-[13px]" />
         </div>
       </div>
 

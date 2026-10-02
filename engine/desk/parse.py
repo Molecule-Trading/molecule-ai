@@ -35,8 +35,8 @@ Use exit_mode reverse when the position should stay open only while the entry ru
 A cross or breakout is true for one session only. If the trade should stay open after that cross, use price_above_sma or price_below_sma with exit_mode reverse, or use exit_mode bracket with a stop, target, or trail.
 Use bracket when the thesis is an entry plus stop, target, or trailing stop and there is no separate exit rule.
 Use signal when exit_rules are the exit. Stops, targets, and trails still fill inside the bar.
-asset_class forex is only for a currency pair. Do not remap EURUSD or any FX pair onto a stock or ETF. Alpaca has no forex bars; the engine will refuse that test.
-If the thesis cites a speech, release, or earnings date you know, put that exact date in events and add an event_bias entry rule with threshold 1 or -1. If you do not know the date, put the reason in untested and do not invent a date.
+asset_class forex is a currency pair such as EURUSD. Never remap a forex pair onto a stock or an ETF.
+If the thesis cites a speech, Fed release, SEC release, or earnings date, put the real date in events and add an event_bias entry rule with threshold 1 or -1. Use a date you know. If you do not know it, put the reason in untested and do not invent one.
 One symbol only. The symbol is the instrument that is bought or sold. Stocks use a ticker. Crypto uses BTC/USD. Forex uses EURUSD.
 stop_loss, take_profit, and trailing_stop are fractions of price (0.02 means 2 percent). window is sessions, except event_bias where window is calendar days after the event, including the event date.
 Do not put a number you were not given into notes.

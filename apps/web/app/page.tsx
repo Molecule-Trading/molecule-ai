@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader, StartLink } from "@/components/SiteHeader";
-import { StrategyThread } from "@/components/StrategyThread";
+import { ProductGrid } from "@/components/ProductGrid";
 import { ThoughtTrace } from "@/components/ThoughtTrace";
 
 const WHY = [
@@ -31,29 +31,6 @@ const INPUTS = [
   { k: "04", label: "News" },
   { k: "05", label: "Rates" },
   { k: "06", label: "Flow" },
-];
-
-const FAQ = [
-  {
-    q: "What is MoleculeAI?",
-    a: "A research desk. You describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.",
-  },
-  {
-    q: "Do I need to write code?",
-    a: "No. Start with a sentence. There is no formula sheet and no setup before the first backtest.",
-  },
-  {
-    q: "Is this live money?",
-    a: "No. The desk simulates the book. It does not place live orders.",
-  },
-  {
-    q: "What does free include?",
-    a: "The free plan includes one strategy in the portfolio. Pro is for unlimited backtests and strategies.",
-  },
-  {
-    q: "Where do the numbers come from?",
-    a: "From the engine, on recorded history. If a run did not produce a figure, the desk does not print one.",
-  },
 ];
 
 function Reveal({
@@ -147,43 +124,6 @@ function SignalField() {
   );
 }
 
-function FaqList() {
-  const [open, setOpen] = useState<number | null>(null);
-
-  return (
-    <div className="border-t border-line">
-      {FAQ.map((item, i) => {
-        const on = open === i;
-        return (
-          <div key={item.q} className="border-b border-line">
-            <button
-              type="button"
-              className="flex w-full items-center justify-between gap-6 py-5 text-left"
-              aria-expanded={on}
-              onClick={() => setOpen(on ? null : i)}
-            >
-              <span className="text-base md:text-lg">{item.q}</span>
-              <span
-                className={`font-mono text-lg leading-none text-mute transition-transform duration-200 ${on ? "rotate-45" : ""}`}
-                aria-hidden
-              >
-                +
-              </span>
-            </button>
-            <div
-              className={`grid transition-[grid-template-rows] duration-300 ease-out ${on ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-            >
-              <div className="overflow-hidden">
-                <p className="max-w-2xl pb-5 text-sm leading-relaxed text-mute">{item.a}</p>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export default function Home() {
   useEffect(() => {
     document.documentElement.classList.add("m-motion");
@@ -236,7 +176,7 @@ export default function Home() {
               MoleculeAI builds the strategy, simulates it, and tests it.
             </p>
             <div className="mt-8">
-              <StrategyThread />
+              <ProductGrid />
             </div>
           </div>
         </section>
@@ -287,17 +227,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="faq" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-24">
-            <Reveal>
-              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">FAQ</p>
-              <h2 className="mt-4 font-serif text-4xl font-medium tracking-tight sm:text-5xl md:text-6xl">A few plain answers.</h2>
-            </Reveal>
-            <div className="mt-12">
-              <FaqList />
-            </div>
-          </div>
-        </section>
       </main>
       <SiteFooter />
     </div>
