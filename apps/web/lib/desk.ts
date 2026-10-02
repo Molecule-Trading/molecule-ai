@@ -38,6 +38,7 @@ const SAFETY = "molecule.desk.safety";
 export type DeskPlan = {
   plan: "free" | "pro";
   cycle: "monthly" | "yearly";
+  renewsAt?: string;
 };
 
 const PLAN = "molecule.desk.plan";

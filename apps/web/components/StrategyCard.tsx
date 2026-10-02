@@ -15,51 +15,47 @@ export function StrategyCard({
 }) {
   const a = run.results?.analytics;
   const ret = typeof a?.total_return === "number" ? a.total_return : undefined;
-  const weak = typeof ret === "number" ? ret < 0 : false;
+  const dd = typeof a?.max_drawdown === "number" ? a.max_drawdown : undefined;
   const backtested = run.status === "COMPLETED" && a;
 
   return (
-    <article className="rounded-2xl border border-line bg-ink-900 p-4">
-      <Link href={`/runs/${run.id}`} className="block text-left">
-        <div className="flex items-start justify-between gap-3">
-          <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-wider">
-            {strategyTicker(run)}
-          </span>
-          <div className="flex gap-2 text-[10px] uppercase tracking-wider">
-            {inPortfolio && (
-              <span className="rounded-full border border-line px-2 py-0.5 text-mute">In portfolio</span>
-            )}
-            {backtested && (
-              <span className="rounded-full border border-line px-2 py-0.5 text-mute">Backtested</span>
-            )}
-            {run.status === "BLOCKED" && (
-              <span className="rounded-full border border-line px-2 py-0.5 text-mute">Blocked</span>
-            )}
-          </div>
+    <article className="flex flex-col rounded-2xl border border-line bg-ink-900">
+      <Link href={`/runs/${run.id}`} className="flex flex-1 flex-col p-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">{strategyTicker(run)}</span>
+          <span className="font-mono text-[10px] text-mute">{shortDate(run.started_at)}</span>
         </div>
-        <h2 className="mt-4 text-lg font-medium leading-snug">{strategyTitle(run)}</h2>
-        <p className="mt-1 line-clamp-2 text-sm text-mute">{run.hypothesis}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-3 font-mono text-xs">
-          {a ? (
-            <>
-              <span className={weak ? "text-red-400" : "text-emerald-400"}>{weak ? "Weak" : "Firm"}</span>
-              <span className={weak ? "text-red-400" : "text-text"}>{pct(ret)}</span>
-              <span className="text-mute">SR {n(a.sharpe)}</span>
-              <span className="text-mute">{a.trade_count ?? 0} trades</span>
-            </>
-          ) : (
-            <span className="text-mute">No engine numbers on this record</span>
-          )}
+        <h2 className="mt-2 text-base font-medium leading-snug">{strategyTitle(run)}</h2>
+        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-mute">{run.hypothesis}</p>
+        <div className="mt-4 grid grid-cols-4 gap-px overflow-hidden rounded-lg border border-line bg-line">
+          <Stat label="Return" value={ret == null ? "—" : pct(ret)} tone={ret} />
+          <Stat label="Sharpe" value={n(a?.sharpe)} tone={a?.sharpe} />
+          <Stat label="Max DD" value={dd == null ? "—" : pct(dd)} down />
+          <Stat label="Trades" value={String(a?.trade_count ?? "—")} />
         </div>
       </Link>
-      <div className="mt-3 flex items-center justify-between text-xs text-mute">
-        <span>{run.status === "COMPLETED" ? "Evaluated" : run.status} · {shortDate(run.started_at)}</span>
+      <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5">
+        <div className="flex gap-2 font-mono text-[10px] uppercase tracking-[0.12em] text-mute">
+          {inPortfolio && <span>In portfolio</span>}
+          {backtested && <span>Backtested</span>}
+          {run.status === "BLOCKED" && <span>Blocked</span>}
+        </div>
         {onDelete && (
-          <button type="button" onClick={onDelete} className="text-red-400 hover:text-red-300">
+          <button type="button" onClick={onDelete} className="text-xs text-mute hover:text-red-400">
             Delete
           </button>
         )}
       </div>
     </article>
+  );
+}
+
+function Stat({ label, value, tone, down }: { label: string; value: string; tone?: number | null; down?: boolean }) {
+  const color = down || (tone != null && tone < 0) ? "text-red-400" : tone != null && tone > 0 ? "text-emerald-400" : "text-text";
+  return (
+    <div className="bg-ink-950 px-2 py-2">
+      <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-mute">{label}</p>
+      <p className={`mt-1 font-mono text-xs ${color}`}>{value}</p>
+    </div>
   );
 }

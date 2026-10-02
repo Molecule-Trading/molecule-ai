@@ -37,7 +37,7 @@ export default function PortfolioPage() {
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Portfolio</div>
           <h1 className="mt-1 font-serif text-4xl font-medium tracking-tight">Weighted book</h1>
-          <p className="mt-2 max-w-xl text-sm text-mute">Each strategy keeps its own weight. The path below uses those weights. Removing one leaves it on the strategies list.</p>
+          <p className="mt-2 max-w-xl text-sm text-mute">Simulate strategies on portfolio level</p>
         </div>
         <Link href="/runs" className="rounded-full border border-line px-4 py-2 text-sm text-mute hover:text-text">
           Strategies

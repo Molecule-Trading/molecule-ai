@@ -217,9 +217,10 @@ export default function Home() {
                 Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
               </p>
               <ThoughtTrace compact />
-              <div className="hero-in mt-auto pt-10 lg:mt-8 lg:pt-0" style={{ animationDelay: "320ms" }}>
+              <div className="hero-in mt-6 lg:mt-8" style={{ animationDelay: "320ms" }}>
                 <StartLink />
               </div>
+              <div className="min-h-8 flex-1 lg:hidden" aria-hidden />
             </div>
             <ThoughtTrace />
           </div>

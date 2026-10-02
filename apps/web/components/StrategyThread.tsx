@@ -137,7 +137,7 @@ export function StrategyThread() {
                   </div>
                 )}
                 {phase > REPLY.length + 6 && (
-                  <div data-phase={REPLY.length + 7} className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
+                  <div data-phase={REPLY.length + 7} className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line">
                     <Sample title="In sample" m={split.inn} />
                     <Sample title="Out of sample" m={split.out} />
                   </div>
@@ -179,14 +179,24 @@ export function StrategyThread() {
 
 function Sample({ title, m }: { title: string; m: { cagr: number; sharpe: number | null; sortino: number | null; max_drawdown: number } }) {
   return (
-    <div className="bg-ink-950 px-4 py-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">{title}</p>
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric k="CAGR" v={pct(m.cagr)} tone={m.cagr} />
-        <Metric k="Sharpe" v={num(m.sharpe)} tone={m.sharpe} />
-        <Metric k="Sortino" v={num(m.sortino)} tone={m.sortino} />
-        <Metric k="Max DD" v={pct(m.max_drawdown)} down />
+    <div className="bg-ink-950 px-3 py-2">
+      <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-mute">{title}</p>
+      <div className="mt-1.5 grid grid-cols-4 gap-2">
+        <Mini k="CAGR" v={pct(m.cagr)} tone={m.cagr} />
+        <Mini k="Sharpe" v={num(m.sharpe)} tone={m.sharpe} />
+        <Mini k="Sortino" v={num(m.sortino)} tone={m.sortino} />
+        <Mini k="Max DD" v={pct(m.max_drawdown)} down />
       </div>
+    </div>
+  );
+}
+
+function Mini({ k, v, tone, down }: { k: string; v: string; tone?: number | null; down?: boolean }) {
+  const color = down || (tone != null && tone < 0) ? "text-red-400" : tone != null && tone > 0 ? "text-emerald-400" : "text-text";
+  return (
+    <div>
+      <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-mute">{k}</p>
+      <p className={`mt-0.5 font-mono text-[11px] leading-none ${color}`}>{v}</p>
     </div>
   );
 }

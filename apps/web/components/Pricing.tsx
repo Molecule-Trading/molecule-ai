@@ -6,6 +6,20 @@ import { loadPlan, savePlan, type DeskPlan } from "@/lib/desk";
 const PRO_MONTH = 25;
 const PRO_YEAR = 250;
 
+function renewsOn(cycle: "monthly" | "yearly") {
+  const d = new Date();
+  if (cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
+
+function stamp(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
 function money(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 }
@@ -39,6 +53,7 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
   const [plan, setPlan] = useState<DeskPlan["plan"]>("free");
   const [savedCycle, setSavedCycle] = useState<DeskPlan["cycle"]>("monthly");
   const [cycle, setCycle] = useState<DeskPlan["cycle"]>("monthly");
+  const [savedRenews, setSavedRenews] = useState<string | undefined>();
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,13 +61,16 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
     setPlan(saved.plan);
     setSavedCycle(saved.cycle);
     setCycle(saved.cycle);
+    setSavedRenews(saved.renewsAt);
   }, []);
 
   function commit(next: DeskPlan, message: string) {
-    setPlan(next.plan);
-    setSavedCycle(next.cycle);
-    setCycle(next.cycle);
-    savePlan(next);
+    const saved = { ...next, renewsAt: next.plan === "pro" ? renewsOn(next.cycle) : undefined };
+    setPlan(saved.plan);
+    setSavedCycle(saved.cycle);
+    setCycle(saved.cycle);
+    setSavedRenews(saved.renewsAt);
+    savePlan(saved);
     setNote(message);
   }
 
@@ -69,6 +87,24 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
         </button>
       )}
       {!embedded && <h1 className="text-center font-serif text-4xl font-medium tracking-tight sm:text-5xl">Pricing</h1>}
+
+      {embedded && (
+        <div className="rounded-2xl border border-line bg-ink-900 px-5 py-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">Current subscription</p>
+          <div className="mt-3 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-lg">{plan === "pro" ? "Pro" : "Free"}</p>
+              <p className="mt-1 text-sm text-mute">
+                {plan === "pro" ? (savedCycle === "yearly" ? "$250 / year" : "$25 / month") : "No active subscription."}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute">Expiry</p>
+              <p className="mt-1 text-sm">{plan === "pro" ? stamp(savedRenews) : "—"}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex justify-center">
         <div className="inline-flex rounded-full border border-line bg-ink-900 p-1">
@@ -151,4 +187,18 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
       </p>
     </div>
   );
+}
+
+function renewsOn(cycle: "monthly" | "yearly") {
+  const d = new Date();
+  if (cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+  else d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
+
+function stamp(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }

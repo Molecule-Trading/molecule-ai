@@ -11,6 +11,7 @@ export function SiteFooter() {
           <a href="mailto:nuneschrisler@gmail.com" aria-label="Email" className="text-mute transition-colors hover:text-text">
             <Mail />
           </a>
+          <span className="text-xs text-mute">© 2026 MoleculeAI</span>
         </div>
         <nav className="flex items-center gap-x-6 text-sm text-mute" aria-label="Legal">
           <Link href="/terms" className="transition-colors hover:text-text">
@@ -19,7 +20,6 @@ export function SiteFooter() {
           <Link href="/privacy" className="transition-colors hover:text-text">
             Privacy
           </Link>
-          <span className="hidden sm:inline">© {new Date().getFullYear()} MoleculeAI</span>
         </nav>
       </div>
     </footer>
