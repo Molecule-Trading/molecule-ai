@@ -24,6 +24,15 @@ const WHY = [
   },
 ];
 
+const INPUTS = [
+  { k: "01", label: "Price" },
+  { k: "02", label: "Volatility" },
+  { k: "03", label: "Macro" },
+  { k: "04", label: "News" },
+  { k: "05", label: "Rates" },
+  { k: "06", label: "Flow" },
+];
+
 const FAQ = [
   {
     q: "What is MoleculeAI?",
@@ -79,6 +88,39 @@ function Reveal({
   return (
     <div ref={ref} style={{ transitionDelay: `${delay}ms` }} className={`rise ${on ? "show" : ""} ${className}`}>
       {children}
+    </div>
+  );
+}
+
+function SignalField() {
+  return (
+    <div className="relative mx-auto aspect-square w-full max-w-[460px]">
+      <svg className="absolute inset-0 h-full w-full text-line" viewBox="0 0 100 100" aria-hidden>
+        <circle cx="50" cy="50" r="36" fill="none" stroke="currentColor" strokeWidth="0.35" />
+        <circle cx="50" cy="50" r="22" fill="none" stroke="currentColor" strokeWidth="0.3" strokeDasharray="0.8 1.4" />
+        {INPUTS.map((_, i) => {
+          const a = ((-90 + i * 60) * Math.PI) / 180;
+          return <line key={i} x1="50" y1="50" x2={50 + Math.cos(a) * 36} y2={50 + Math.sin(a) * 36} stroke="currentColor" strokeWidth="0.3" />;
+        })}
+      </svg>
+      <div className="signal-orbit pointer-events-none absolute inset-[14%]" aria-hidden>
+        <span className="absolute left-1/2 top-0 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-text shadow-[0_0_14px_rgba(232,234,237,0.85)]" />
+      </div>
+      <div className="absolute left-1/2 top-1/2 flex h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-ink-950">
+        <img src="/icon-32.png" alt="" className="h-8 w-8" />
+      </div>
+      {INPUTS.map((item, i) => {
+        const a = ((-90 + i * 60) * Math.PI) / 180;
+        const x = 50 + Math.cos(a) * 36;
+        const y = 50 + Math.sin(a) * 36;
+        return (
+          <div key={item.k} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
+            <div className={`whitespace-nowrap rounded-full border bg-ink-950 px-3.5 py-1.5 text-[13px] ${i === 0 ? "border-text/40 text-text" : "border-line text-mute"}`}>
+              {item.label}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -139,10 +181,12 @@ export default function Home() {
                 MoleculeAI
               </p>
               <h1
-                className="hero-in mt-5 max-w-3xl font-serif text-6xl font-medium leading-[0.98] tracking-tight md:text-7xl lg:text-8xl"
+                className="hero-in mt-5 max-w-3xl font-serif text-5xl font-medium leading-[0.98] tracking-tight sm:text-6xl lg:text-7xl"
                 style={{ animationDelay: "120ms" }}
               >
-                A desk for the hypothesis, then the book.
+                Frontier AI model
+                <br />
+                for agentic trading.
               </h1>
               <p
                 className="hero-in mt-6 max-w-xl text-lg leading-relaxed text-mute md:text-xl"
@@ -158,36 +202,55 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="solutions" className="scroll-mt-20 mx-auto w-full max-w-6xl px-5 pb-8 pt-10 md:px-8">
-          <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solution</p>
-            <h2 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
-              Anyone can trade
-            </h2>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-mute">
-              You don't need a quant degree or a Bloomberg terminal.
-              <br />
-              Describe your strategy in natural language and let the AI do the rest.
-            </p>
-          </Reveal>
-          <div className="mt-14 grid border border-line md:grid-cols-3">
-            {WHY.map((item, i) => (
-              <Reveal key={item.n} delay={i * 90} className="h-full">
-                <article className="h-full border-b border-line px-6 py-8 transition duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-ink-900 md:border-b-0 md:border-r md:last:border-r-0">
-                  <div className="flex items-baseline justify-between gap-4">
-                    <h3 className="text-base font-semibold">{item.title}</h3>
-                    <span className="font-mono text-xs text-mute">{item.n}</span>
-                  </div>
-                  <p className="mt-4 text-sm leading-relaxed text-mute">{item.body}</p>
-                </article>
-              </Reveal>
-            ))}
+        <section id="product" className="scroll-mt-20">
+          <div className="mx-auto w-full max-w-6xl px-5 pb-8 pt-6 md:px-8 md:pb-16">
+            <StrategyThread />
           </div>
         </section>
 
-        <section id="product" className="scroll-mt-20">
-          <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-4 md:px-8">
-            <StrategyThread />
+        <section id="solutions" className="scroll-mt-20 border-t border-line">
+          <div className="mx-auto w-full max-w-6xl px-5 py-20 md:px-8 md:py-28">
+            <Reveal>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Solution</p>
+              <h2 className="mt-5 max-w-3xl font-serif text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
+                Anyone can trade
+              </h2>
+              <p className="mt-6 max-w-xl text-base leading-relaxed text-mute">
+                You don't need a quant degree or a Bloomberg terminal.
+                <br />
+                Describe your strategy in natural language and let the AI do the rest.
+              </p>
+            </Reveal>
+            <div className="mt-14 grid border border-line md:grid-cols-3">
+              {WHY.map((item, i) => (
+                <Reveal key={item.n} delay={i * 90} className="h-full">
+                  <article className="h-full border-b border-line px-6 py-8 transition duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-ink-900 md:border-b-0 md:border-r md:last:border-r-0">
+                    <div className="flex items-baseline justify-between gap-4">
+                      <h3 className="text-base font-semibold">{item.title}</h3>
+                      <span className="font-mono text-xs text-mute">{item.n}</span>
+                    </div>
+                    <p className="mt-4 text-sm leading-relaxed text-mute">{item.body}</p>
+                  </article>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-line">
+          <div className="mx-auto grid w-full max-w-6xl items-center gap-12 px-5 py-20 md:px-8 md:py-28 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+            <Reveal>
+              <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Inputs</p>
+              <h2 className="mt-5 max-w-md font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-6xl">
+                The test reads more than price.
+              </h2>
+              <p className="mt-6 max-w-md text-base leading-relaxed text-mute">
+                Price, volatility, macro, news, rates, and flow. MoleculeAI keeps the inputs that change the book and leaves the rest out.
+              </p>
+            </Reveal>
+            <Reveal delay={80}>
+              <SignalField />
+            </Reveal>
           </div>
         </section>
 

@@ -112,6 +112,16 @@ button,
   }
 }
 
+.signal-orbit {
+  animation: signal-orbit 28s linear infinite;
+}
+
+@keyframes signal-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes lattice-drift {
   from {
     background-position: 0 0;
@@ -127,7 +137,8 @@ button,
   }
   .hero-lattice,
   .hero-in,
-  .thread-in {
+  .thread-in,
+  .signal-orbit {
     animation: none;
   }
   .m-motion .rise:not(.show) {
