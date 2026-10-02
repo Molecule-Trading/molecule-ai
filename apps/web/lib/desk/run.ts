@@ -230,6 +230,8 @@ function noteEvents(spec: DeskSpec, bars: DeskBar[]) {
     }
   }
 }
+
+function assumptions(spec: DeskSpec, bars: DeskBar[], openMarked: boolean) {
   const entry = spec.entry.map((r: DeskRule) => `${r.kind}(${r.window})`).join(", ") || "—";
   const risk = [
     spec.stop_loss ? `stop ${(spec.stop_loss * 100).toFixed(2)}%` : "",
