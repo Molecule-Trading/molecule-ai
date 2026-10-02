@@ -235,11 +235,17 @@ def test_short_cross_sells_under_the_average_not_above_it():
     assert fills[0]["price"] == 90
 
 
-def test_forex_is_refused_before_any_request():
-    from data.alpaca.bars import AlpacaBars, AlpacaError
+def test_ohlc_without_a_bars_key_still_makes_a_close_line():
+    from data.alpaca.bars import extract_ohlc, normalize_symbol
 
-    with pytest.raises(AlpacaError, match="does not publish forex"):
-        AlpacaBars("k", "s").daily("forex", "EUR/USD", "2020-01-01", "2020-06-01")
+    rows = extract_ohlc(
+        {"quotes": [{"timestamp": "2024-03-01T00:00:00Z", "close": 1.08}, {"t": "2024-03-04", "c": 1.09, "o": 1.07, "h": 1.1, "l": 1.06}]},
+        "EURUSD",
+    )
+    assert [r["t"] for r in rows] == ["2024-03-01", "2024-03-04"]
+    assert rows[0]["o"] == rows[0]["c"] == 1.08
+    assert normalize_symbol("forex", "EUR/USD") == "EURUSD"
+    assert "FXE" not in normalize_symbol("forex", "EURUSD")
 
 
 def test_normalize_reads_a_percent_stop_and_does_not_invent_a_date():

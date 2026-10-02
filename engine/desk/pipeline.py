@@ -91,7 +91,7 @@ def _assumptions(spec: DeskSpec, bars: list[Bar], analytics: dict) -> list[list[
         ["Fill", "signal at close, fill next open; stop before target"],
         ["Costs", "not in the tape; sliders default to 0.10% fee and 0.05% slippage per fill"],
         ["Capital", "100,000"],
-        ["Data", "Alpaca daily bars"],
+        ["Data", "Alpaca OHLC, drawn as a line of closes"],
     ]
     if analytics.get("open_marked"):
         rows.append(["Open trade", "still open, marked to the last close"])
