@@ -250,15 +250,15 @@ export default function Home() {
                 Describe your strategy in natural language and let the AI do the rest.
               </p>
             </Reveal>
-            <div className="mt-14 grid border border-line md:grid-cols-3">
+            <div className="mt-8 grid border border-line md:mt-14 md:grid-cols-3">
               {WHY.map((item, i) => (
                 <Reveal key={item.n} delay={i * 90} className="h-full">
-                  <article className="h-full border-b border-line px-6 py-8 transition duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-ink-900 md:border-b-0 md:border-r md:last:border-r-0">
+                  <article className="h-full border-b border-line px-4 py-4 transition duration-200 last:border-b-0 hover:-translate-y-0.5 hover:bg-ink-900 md:border-b-0 md:border-r md:px-6 md:py-8 md:last:border-r-0">
                     <div className="flex items-baseline justify-between gap-4">
-                      <h3 className="text-base font-semibold">{item.title}</h3>
-                      <span className="font-mono text-xs text-mute">{item.n}</span>
+                      <h3 className="text-sm font-semibold md:text-base">{item.title}</h3>
+                      <span className="font-mono text-[11px] text-mute md:text-xs">{item.n}</span>
                     </div>
-                    <p className="mt-4 text-sm leading-relaxed text-mute">{item.body}</p>
+                    <p className="mt-2 text-[13px] leading-snug text-mute md:mt-4 md:text-sm md:leading-relaxed">{item.body}</p>
                   </article>
                 </Reveal>
               ))}
