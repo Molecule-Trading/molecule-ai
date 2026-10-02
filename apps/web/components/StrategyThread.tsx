@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { DistChart, DrawdownChart, EquityChart } from "@/components/Charts";
-import { histOf, windowOf } from "@/lib/sampleBook";
+import { histOf, splitOf, windowOf } from "@/lib/sampleBook";
 
 const USER = "Buy when the twenty-day return is positive and volatility is falling.";
 
@@ -28,11 +28,12 @@ const vols: number[] = [];
   }
 }
 const volDist = histOf(vols);
+const split = splitOf(view.bars);
 
 export function StrategyThread() {
   const scroller = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
-  const last = REPLY.length + 4;
+  const last = REPLY.length + 5;
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -124,10 +125,30 @@ export function StrategyThread() {
                     </div>
                   </div>
                 )}
+                {phase > REPLY.length + 4 && (
+                  <div className="thread-in grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
+                    <Sample title="In sample" m={split.inn} />
+                    <Sample title="Out of sample" m={split.out} />
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Sample({ title, m }: { title: string; m: { cagr: number; sharpe: number | null; sortino: number | null; max_drawdown: number } }) {
+  return (
+    <div className="bg-ink-950 px-4 py-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">{title}</p>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Metric k="CAGR" v={pct(m.cagr)} tone={m.cagr} />
+        <Metric k="Sharpe" v={num(m.sharpe)} tone={m.sharpe} />
+        <Metric k="Sortino" v={num(m.sortino)} tone={m.sortino} />
+        <Metric k="Max DD" v={pct(m.max_drawdown)} down />
       </div>
     </div>
   );
