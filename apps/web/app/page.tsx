@@ -27,7 +27,7 @@ const WHY = [
 const FAQ = [
   {
     q: "What is MoleculeAI?",
-    a: "A research desk. You describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and lets you paper it.",
+    a: "A research desk. You describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.",
   },
   {
     q: "Do I need to write code?",
@@ -35,11 +35,11 @@ const FAQ = [
   },
   {
     q: "Is this live money?",
-    a: "No. A deployed strategy runs on the paper book. You can stop it whenever the idea is finished.",
+    a: "No. The desk simulates the book. It does not place live orders.",
   },
   {
     q: "What does free include?",
-    a: "The free plan includes one deployed paper strategy. Pro is for unlimited backtests and deployed strategies.",
+    a: "The free plan includes one strategy in the portfolio. Pro is for unlimited backtests and strategies.",
   },
   {
     q: "Where do the numbers come from?",

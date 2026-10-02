@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
 import { DistChart, DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
-import { deployPaper, isPaper, stopPaper } from "@/lib/desk";
+import { addToBook, hideStrategy, inBook } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
 import { bookIdOf, clip, fanOf, histOf, quote, splitOf, yearRows, type Span } from "@/lib/sampleBook";
 
@@ -15,9 +15,10 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 export default function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [run, setRun] = useState<Run | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [paper, setPaper] = useState(false);
+  const [held, setHeld] = useState(false);
   const [span, setSpan] = useState<Span>("MAX");
   const [scale, setScale] = useState<"equity" | "pct" | "log">("equity");
   const [fee, setFee] = useState(0.1);
@@ -28,7 +29,7 @@ export default function RunDetailPage() {
 
   useEffect(() => {
     api<Run>(`/runs/${id}`).then(setRun).catch((e) => setErr(String(e)));
-    setPaper(isPaper(id));
+    setHeld(inBook(id));
   }, [id]);
 
   const book = bookIdOf(id);
@@ -42,25 +43,21 @@ export default function RunDetailPage() {
   const a = view.metrics;
   const script = run ? strategyTitle(run) : "Book";
 
-  function togglePaper() {
-    if (!run) return;
-    if (paper) {
-      stopPaper(run.id);
-      setPaper(false);
-      return;
-    }
-    deployPaper({
+  function add() {
+    if (!run || held) return;
+    addToBook({
       runId: run.id,
       title: strategyTitle(run),
       ticker: strategyTicker(run),
       hypothesis: run.hypothesis,
-      deployedAt: new Date().toISOString(),
-      ret: a.cagr,
-      sharpe: a.sharpe ?? undefined,
-      pnl: a.net_pnl,
-      trades: view.trades.length,
     });
-    setPaper(true);
+    setHeld(true);
+  }
+
+  function removeStrategy() {
+    if (!run) return;
+    hideStrategy(run.id);
+    router.push("/runs");
   }
 
   if (err) return <PageShell><div className="text-sm text-red-400">{err}</div></PageShell>;
@@ -75,9 +72,14 @@ export default function RunDetailPage() {
             <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight md:text-4xl">{strategyTitle(run)}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mute">{run.hypothesis}</p>
           </div>
-          <button type="button" onClick={togglePaper} className={`rounded-full px-4 py-2 text-sm font-medium ${paper ? "border border-emerald-800 text-emerald-400" : "bg-text text-ink-950"}`}>
-            {paper ? "Simulated · on" : "Deploy"}
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={removeStrategy} className="rounded-full border border-line px-4 py-2 text-sm text-red-400">
+              Delete
+            </button>
+            <button type="button" onClick={add} disabled={held} className={`rounded-full px-4 py-2 text-sm font-medium ${held ? "border border-line text-mute" : "bg-text text-ink-950"}`}>
+              {held ? "In portfolio" : "Add to portfolio"}
+            </button>
+          </div>
         </div>
 
         <div className="relative flex flex-wrap items-center gap-3">

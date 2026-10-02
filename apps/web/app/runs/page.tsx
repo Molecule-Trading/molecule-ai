@@ -5,30 +5,33 @@ import Link from "next/link";
 import { api, Run } from "@/lib/api";
 import { PageShell } from "@/components/PageShell";
 import { StrategyCard } from "@/components/StrategyCard";
-import { loadPaper } from "@/lib/desk";
+import { hideStrategy, loadBook, loadHidden } from "@/lib/desk";
 import { strategyTicker, strategyTitle } from "@/lib/format";
 
 export default function RunsPage() {
   const [runs, setRuns] = useState<Run[]>([]);
-  const [paperIds, setPaperIds] = useState<string[]>([]);
-  const [tab, setTab] = useState<"all" | "deployed">("all");
+  const [bookIds, setBookIds] = useState<string[]>([]);
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [tab, setTab] = useState<"all" | "book">("all");
   const [q, setQ] = useState("");
 
   useEffect(() => {
     api<{ runs: Run[] }>("/runs")
       .then((r) => setRuns(r.runs))
       .catch(() => setRuns([]));
-    setPaperIds(loadPaper().map((p) => p.runId));
+    setBookIds(loadBook().map((p) => p.runId));
+    setHidden(loadHidden());
   }, []);
 
   const filtered = useMemo(() => {
     return runs.filter((r) => {
-      if (tab === "deployed" && !paperIds.includes(r.id)) return false;
+      if (hidden.includes(r.id)) return false;
+      if (tab === "book" && !bookIds.includes(r.id)) return false;
       if (!q.trim()) return true;
       const blob = `${r.hypothesis} ${strategyTitle(r)} ${strategyTicker(r)}`.toLowerCase();
       return blob.includes(q.toLowerCase());
     });
-  }, [runs, tab, q, paperIds]);
+  }, [runs, tab, q, bookIds, hidden]);
 
   return (
     <PageShell>
@@ -36,7 +39,7 @@ export default function RunsPage() {
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Strategies</div>
           <h1 className="mt-1 font-serif text-4xl font-medium tracking-tight">Your strategies</h1>
-          <p className="mt-2 text-sm text-mute">{runs.length} Simulated</p>
+          <p className="mt-2 text-sm text-mute">{runs.filter((r) => !hidden.includes(r.id)).length} Simulated</p>
         </div>
         <div className="flex items-center gap-2">
           <Link
@@ -64,13 +67,13 @@ export default function RunsPage() {
           </button>
           <button
             type="button"
-            onClick={() => setTab("deployed")}
+            onClick={() => setTab("book")}
             className={`rounded-full px-3 py-1.5 text-sm ${
-              tab === "deployed" ? "bg-ink-800 text-text" : "text-mute hover:text-text"
+              tab === "book" ? "bg-ink-800 text-text" : "text-mute hover:text-text"
             }`}
           >
-            Deployed
-            <span className="ml-2 text-mute">{paperIds.length}</span>
+            In portfolio
+            <span className="ml-2 text-mute">{bookIds.length}</span>
           </button>
         </div>
         <input
@@ -83,7 +86,15 @@ export default function RunsPage() {
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {filtered.map((r) => (
-          <StrategyCard key={r.id} run={r} deployed={paperIds.includes(r.id)} />
+          <StrategyCard
+            key={r.id}
+            run={r}
+            inPortfolio={bookIds.includes(r.id)}
+            onDelete={() => {
+              setHidden(hideStrategy(r.id));
+              setBookIds(loadBook().map((p) => p.runId));
+            }}
+          />
         ))}
         <Link
           href="/research"

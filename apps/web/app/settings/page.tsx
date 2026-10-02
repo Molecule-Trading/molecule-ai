@@ -86,13 +86,8 @@ function SettingsInner() {
       <div className="mx-auto w-full max-w-5xl">
       <div className="flex flex-col gap-8 md:flex-row md:gap-10">
         <aside className="w-full shrink-0 md:w-56">
-          <div className="flex items-center gap-3 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-line font-mono text-xs">
-              {(profile.firstName || "M").slice(0, 1).toUpperCase()}
-              {(profile.lastName || "").slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <div className="truncate text-sm">
+          <div className="pb-4">
+            <div className="truncate text-sm">
                 {profile.firstName || profile.lastName
                   ? `${profile.firstName} ${profile.lastName}`.trim()
                   : "Molecule desk"}

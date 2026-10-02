@@ -436,33 +436,32 @@ export function fanOf(bars: Bar[], paths = 48): FanPoint[] {
 
 const SLEEVE_IDS: BookId[] = ["momentum", "fade", "trend"];
 
-export function portfolioOf(feePct = 0.1, slipPct = 0.05) {
-  const sleeves = SLEEVE_IDS.map((id) => quote("MAX", feePct, slipPct, id));
-  const n = Math.min(...sleeves.map((s) => s.bars.length));
+export function portfolioWeighted(parts: { book: BookId; weight: number }[]) {
+  const live = parts.filter((p) => p.weight > 0);
+  if (!live.length) return { bars: [] as Bar[], metrics: null, sleeves: [] as { id: BookId; weight: number; share: number }[] };
+  const sum = live.reduce((s, p) => s + p.weight, 0);
+  const quoted = live.map((p) => ({ ...p, share: p.weight / sum, q: quote("MAX", 0.1, 0.05, p.book) }));
+  const n = Math.min(...quoted.map((s) => s.q.bars.length));
   let equity = 100000;
   let peak = equity;
   const bars: Bar[] = [];
-  const prev = sleeves.map((s) => s.bars[0]?.equity || 100000);
+  const prev = quoted.map((s) => s.q.bars[0]?.equity || 100000);
   for (let i = 0; i < n; i++) {
     if (i > 0) {
       let r = 0;
-      sleeves.forEach((s, k) => {
-        const e = s.bars[i].equity;
-        r += e / prev[k] - 1;
+      quoted.forEach((s, k) => {
+        const e = s.q.bars[i].equity;
+        r += s.share * (e / prev[k] - 1);
         prev[k] = e;
       });
-      equity *= 1 + r / sleeves.length;
-    } else {
-      sleeves.forEach((s, k) => {
-        prev[k] = s.bars[0].equity;
-      });
+      equity *= 1 + r;
     }
     peak = Math.max(peak, equity);
-    bars.push({ t: sleeves[0].bars[i].t, equity, drawdown: equity / peak - 1 });
+    bars.push({ t: quoted[0].q.bars[i].t, equity, drawdown: equity / peak - 1 });
   }
   return {
     bars,
     metrics: metricsOf(bars.map((b) => b.equity), []),
-    sleeves: sleeves.map((s, i) => ({ id: SLEEVE_IDS[i], metrics: s.metrics, trades: s.trades.length })),
+    sleeves: quoted.map((s) => ({ id: s.book, weight: s.weight, share: s.share })),
   };
 }

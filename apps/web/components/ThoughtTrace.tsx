@@ -25,25 +25,25 @@ export function ThoughtTrace() {
   }, []);
 
   return (
-    <div className="hero-in hidden w-full lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
-      <ol className="flex flex-col">
+    <div className="hero-in hidden w-full justify-self-end lg:block" style={{ animationDelay: "200ms" }} aria-hidden>
+      <ol className="ml-auto flex w-full max-w-md flex-col">
         {LINES.map((line, i) => {
           const on = i < n;
           const current = i === n - 1;
           return (
-            <li key={line} className="grid grid-cols-[18px_1fr] gap-4">
+            <li key={line} className="grid grid-cols-[22px_1fr] gap-5">
               <span className="flex flex-col items-center">
                 <span
-                  className={`mt-1.5 h-1.5 w-1.5 rounded-full transition-all duration-500 ${
+                  className={`mt-2 h-2 w-2 rounded-full transition-all duration-500 ${
                     on ? "bg-text" : "bg-line"
                   } ${current ? "scale-125" : ""}`}
                 />
                 {i < LINES.length - 1 && (
-                  <span className={`mt-1 h-12 w-px transition-colors duration-500 ${i < n - 1 ? "bg-text/40" : "bg-line"}`} />
+                  <span className={`mt-2 h-16 w-px transition-colors duration-500 ${i < n - 1 ? "bg-text/40" : "bg-line"}`} />
                 )}
               </span>
               <p
-                className={`pt-1 text-lg leading-snug transition-all duration-500 ${
+                className={`pt-0.5 text-xl leading-snug transition-all duration-500 xl:text-2xl ${
                   on ? "text-text opacity-100" : "text-mute opacity-25"
                 }`}
               >

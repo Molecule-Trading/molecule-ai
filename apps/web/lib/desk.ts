@@ -41,7 +41,8 @@ export type DeskPlan = {
 };
 
 const PLAN = "molecule.desk.plan";
-const PAPER = "molecule.desk.paper";
+const BOOK = "molecule.desk.book";
+const HIDDEN = "molecule.desk.hidden";
 const SESSION = "molecule.desk.session";
 
 export const ADMIN = {
@@ -58,16 +59,13 @@ export type Session = {
   signedInAt: string;
 };
 
-export type PaperPosition = {
+export type Sleeve = {
   runId: string;
   title: string;
   ticker: string;
   hypothesis: string;
-  deployedAt: string;
-  ret?: number;
-  sharpe?: number;
-  pnl?: number;
-  trades?: number;
+  weight: number;
+  addedAt: string;
 };
 
 function read<T>(key: string, fallback: T): T {
@@ -145,24 +143,48 @@ export function savePlan(value: DeskPlan) {
   write(PLAN, value);
 }
 
-export function loadPaper(): PaperPosition[] {
-  return read<PaperPosition[]>(PAPER, []);
+export function loadBook(): Sleeve[] {
+  return read<Sleeve[]>(BOOK, []);
 }
 
-export function isPaper(runId: string) {
-  return loadPaper().some((p) => p.runId === runId);
+export function inBook(runId: string) {
+  return loadBook().some((p) => p.runId === runId);
 }
 
-export function deployPaper(position: PaperPosition) {
-  const next = [position, ...loadPaper().filter((p) => p.runId !== position.runId)];
-  write(PAPER, next);
+export function addToBook(sleeve: Omit<Sleeve, "weight" | "addedAt"> & { weight?: number }) {
+  const current = loadBook();
+  if (current.some((p) => p.runId === sleeve.runId)) return current;
+  const next = [
+    ...current,
+    { ...sleeve, weight: sleeve.weight ?? 1, addedAt: new Date().toISOString() },
+  ];
+  const share = 100 / next.length;
+  const balanced = next.map((s) => ({ ...s, weight: Math.round(share * 10) / 10 }));
+  write(BOOK, balanced);
+  return balanced;
+}
+
+export function removeFromBook(runId: string) {
+  const next = loadBook().filter((p) => p.runId !== runId);
+  write(BOOK, next);
   return next;
 }
 
-export function stopPaper(runId: string) {
-  const next = loadPaper().filter((p) => p.runId !== runId);
-  write(PAPER, next);
+export function setWeight(runId: string, weight: number) {
+  const next = loadBook().map((p) => (p.runId === runId ? { ...p, weight: Math.max(0, weight) } : p));
+  write(BOOK, next);
   return next;
+}
+
+export function loadHidden(): string[] {
+  return read<string[]>(HIDDEN, []);
+}
+
+export function hideStrategy(runId: string) {
+  const hidden = [...new Set([...loadHidden(), runId])];
+  write(HIDDEN, hidden);
+  removeFromBook(runId);
+  return hidden;
 }
 
 export function signOutLocal() {
@@ -172,7 +194,8 @@ export function signOutLocal() {
   window.localStorage.removeItem(BROKERS);
   window.localStorage.removeItem(SAFETY);
   window.localStorage.removeItem(PLAN);
-  window.localStorage.removeItem(PAPER);
+  window.localStorage.removeItem(BOOK);
+  window.localStorage.removeItem(HIDDEN);
   window.localStorage.removeItem(SESSION);
   window.localStorage.removeItem("molecule.desk.2fa");
 }

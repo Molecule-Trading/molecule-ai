@@ -25,10 +25,10 @@ function Check() {
   );
 }
 
-const FREE_FEATURES = ["1 free deployed strategy (paper or live trading)"];
+const FREE_FEATURES = ["1 strategy in the portfolio"];
 
 const PRO_FEATURES = [
-  "Unlimited deployed strategies",
+  "Unlimited strategies in the portfolio",
   "Unlimited backtests on historical data",
   "Spot what the market is reacting to and turn it into a strategy",
   "Track the news and the accounts you follow",
