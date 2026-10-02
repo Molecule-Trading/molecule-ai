@@ -93,7 +93,6 @@ function SettingsInner() {
                   : "Molecule desk"}
               </div>
               <div className="truncate text-xs text-mute">{profile.email || "No email set"}</div>
-            </div>
           </div>
           <nav>
             {TABS.map((t) => (
