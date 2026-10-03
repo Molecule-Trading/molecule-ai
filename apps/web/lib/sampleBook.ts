@@ -28,7 +28,7 @@ export type Metrics = {
   volatility: number | null;
 };
 export type Span = "1Y" | "3Y" | "5Y" | "MAX";
-export type FanPoint = { t: string; p10: number; p50: number; p90: number; band: [number, number] };
+export type FanPoint = { t: string; p10: number; p50: number; p90: number; band: [number, number]; paths: number[] };
 
 const SESSIONS: Record<Exclude<Span, "MAX">, number> = { "1Y": 252, "3Y": 252 * 3, "5Y": 252 * 5 };
 
@@ -425,12 +425,15 @@ export function fanOf(bars: Bar[], paths = 48): FanPoint[] {
     }
     clouds.push(path);
   }
+  const show = Math.min(16, clouds.length);
+  const stride = Math.max(1, Math.floor(clouds.length / show));
+  const picked = clouds.filter((_, i) => i % stride === 0).slice(0, show);
   return bars.map((b, i) => {
     const col = clouds.map((c) => c[i] ?? c[c.length - 1]).sort((a, c) => a - c);
     const p10 = col[Math.floor(col.length * 0.1)];
     const p50 = col[Math.floor(col.length * 0.5)];
     const p90 = col[Math.floor(col.length * 0.9)];
-    return { t: b.t, p10, p50, p90, band: [p10, p90] };
+    return { t: b.t, p10, p50, p90, band: [p10, p90] as [number, number], paths: picked.map((c) => c[i] ?? c[c.length - 1]) };
   });
 }
 

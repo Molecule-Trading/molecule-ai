@@ -716,11 +716,13 @@ button,
 }
 
 .feat {
-  padding: clamp(72px, 12vw, 150px) clamp(20px, 5vw, 64px);
+  padding: clamp(72px, 12vw, 150px) 0;
 }
 .feat .wrap {
-  max-width: 1200px;
+  max-width: 72rem;
   margin: 0 auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
@@ -829,6 +831,12 @@ button,
 .feat .pill.on text {
   fill: #fff;
 }
+@media (min-width: 768px) {
+  .feat .wrap {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
 @media (max-width: 860px) {
   .feat .wrap {
     grid-template-columns: 1fr;
@@ -840,15 +848,19 @@ button,
   position: relative;
   overflow: hidden;
   border-top: 1px solid #1c1f24;
-  padding: 56px clamp(20px, 5vw, 64px) 0;
+  padding: 56px 0 0;
   background: #0a0b0d;
+}
+.site-foot .shell {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
 }
 .site-foot .top {
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr);
   gap: 48px;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 .site-foot .brand {
   display: flex;
@@ -920,16 +932,13 @@ button,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 56px auto 0;
+  margin: 56px 0 0;
   padding: 20px 0;
   border-top: 1px solid #1c1f24;
   font: 12px/1 "IBM Plex Mono", ui-monospace, monospace;
   color: #5b6068;
 }
 .site-foot .mark {
-  max-width: 1200px;
-  margin: 0 auto;
   height: clamp(70px, 16vw, 190px);
   overflow: hidden;
   font-weight: 800;
@@ -943,6 +952,12 @@ button,
   -webkit-mask-image: linear-gradient(#000 25%, transparent 95%);
   mask-image: linear-gradient(#000 25%, transparent 95%);
 }
+@media (min-width: 768px) {
+  .site-foot .shell {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
 @media (max-width: 760px) {
   .site-foot .top {
     grid-template-columns: 1fr;
@@ -954,8 +969,136 @@ button,
 }
 @media (prefers-reduced-motion: reduce) {
   .feat .rv,
-  .feat .pill {
+  .feat .pill,
+  .sol .rv {
     opacity: 1;
     transform: none;
+  }
+  .sol .st::after {
+    transform: scaleX(1);
+  }
+}
+
+.sol {
+  width: 100%;
+  padding: clamp(64px, 10vw, 120px) 0;
+}
+.sol .w {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.sol .eyebrow {
+  font: 500 10.5px/1 "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #5b6068;
+}
+.sol h2 {
+  margin: 22px 0 0;
+  font: 500 clamp(46px, 7vw, 84px) / 1 "IBM Plex Serif", Georgia, serif;
+  letter-spacing: -0.025em;
+  color: #eceef1;
+}
+.sol .lead {
+  margin: 24px 0 0;
+  max-width: 520px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #8b93a0;
+}
+.sol .steps {
+  margin-top: clamp(48px, 7vw, 84px);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(28px, 3.4vw, 48px);
+}
+.sol .st {
+  position: relative;
+  padding-top: 22px;
+}
+.sol .st::before,
+.sol .st::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+.sol .st::before {
+  background: #23272d;
+}
+.sol .st::after {
+  background: #eceef1;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition:
+    transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) calc(0.5s + var(--i) * 0.25s),
+    opacity 0.4s;
+  opacity: 0.55;
+}
+.sol.in .st::after {
+  transform: scaleX(1);
+}
+.sol .st:hover::after {
+  opacity: 1;
+}
+.sol .n {
+  font: 11px/1 "IBM Plex Mono", ui-monospace, monospace;
+  color: #5b6068;
+  letter-spacing: 0.08em;
+  transition: color 0.3s;
+}
+.sol .st:hover .n {
+  color: #eceef1;
+}
+.sol h3 {
+  margin: 18px 0 0;
+  font: 600 17px/1.3 "IBM Plex Sans", system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+.sol .st p {
+  margin: 12px 0 0;
+  max-width: 34ch;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #8b93a0;
+  transition: color 0.3s;
+}
+.sol .st:hover p {
+  color: #b4bac4;
+}
+.sol .rv {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.9s ease calc(var(--i) * 110ms),
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--i) * 110ms);
+}
+.sol.in .rv {
+  opacity: 1;
+  transform: none;
+}
+@media (min-width: 768px) {
+  .sol .w {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+@media (max-width: 980px) {
+  .sol .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 40px;
+  }
+}
+@media (max-width: 600px) {
+  .sol .steps {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .sol .st p {
+    max-width: none;
   }
 }

@@ -28,6 +28,7 @@ const COLS = [
 export function SiteFooter() {
   return (
     <footer className="site-foot mt-auto">
+      <div className="shell">
       <div className="top">
         <div>
           <div className="brand">
@@ -59,6 +60,7 @@ export function SiteFooter() {
       </div>
       <div className="mark" aria-hidden>
         Molecule
+      </div>
       </div>
     </footer>
   );

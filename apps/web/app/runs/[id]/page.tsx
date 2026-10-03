@@ -201,15 +201,15 @@ export default function RunDetailPage() {
         <ChartCard title="Underwater Drawdown Plot" note="Days under the running peak">
           <DrawdownChart key={`dd-${span}-${fee}`} data={view.bars} height={220} />
         </ChartCard>
-        <ChartCard title="Monte Carlo" note="48 paths. 10th, median, 90th.">
-          <MonteCarloChart key={`mc-${from}-${to}-${fee}-${book}`} data={fan} height={240} />
-        </ChartCard>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <ChartCard title="Monte Carlo" note="48 paths. 10th, median, 90th.">
+            <MonteCarloChart key={`mc-${from}-${to}-${fee}-${book}`} data={fan} height={240} />
+          </ChartCard>
           <ChartCard title="Return distribution" note="Daily book returns">
-            <DistChart key={`rd-${from}-${to}-${book}`} data={dist} label="Days" height={220} />
+            <DistChart key={`rd-${from}-${to}-${book}`} data={dist} label="Days" height={240} />
           </ChartCard>
           <ChartCard title="Volatility distribution" note="20-session realized volatility">
-            <DistChart key={`vd-${from}-${to}-${book}`} data={volDist} label="Sessions" height={220} />
+            <DistChart key={`vd-${from}-${to}-${book}`} data={volDist} label="Sessions" height={240} />
           </ChartCard>
         </div>
 

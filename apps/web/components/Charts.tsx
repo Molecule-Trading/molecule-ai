@@ -1,10 +1,13 @@
 "use client";
 
+import { useId } from "react";
 import {
+  Area,
+  Bar,
+  BarChart,
   CartesianGrid,
   ComposedChart,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -110,7 +113,105 @@ export function EquityChart({
 
 export function DrawdownChart({ data, height = 220 }: { data: { t: string; drawdown: number }[]; height?: number }) {
   const days = spanDays(data);
+  const fillId = `ddFill-${useId().replace(/:/g, "")}`;
   const series = data.map((d) => ({ ...d, dd: d.drawdown * 100 }));
+  const lo = Math.min(0, ...series.map((d) => d.dd));
+  return (
+    <div className="w-full" style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={series} margin={frame}>
+          <defs>
+            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#e8eaed" stopOpacity={0.02} />
+              <stop offset="100%" stopColor="#c45c4a" stopOpacity={0.45} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke={GRID} vertical={false} />
+          <XAxis
+            dataKey="t"
+            tick={AXIS}
+            tickFormatter={(v) => tickOf(String(v), days)}
+            minTickGap={56}
+            axisLine={{ stroke: "#2a2f36" }}
+            tickLine={false}
+          />
+          <YAxis
+            orientation="right"
+            tick={AXIS}
+            width={72}
+            axisLine={false}
+            tickLine={false}
+            domain={[Math.min(lo * 1.08, -0.4), 0]}
+            tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+          />
+          <Tooltip
+            contentStyle={TIP}
+            labelFormatter={(v) => stamp(String(v))}
+            formatter={(v) => [`${Number(v).toFixed(2)}%`, "Drawdown"]}
+          />
+          <Area type="monotone" dataKey="dd" stroke="#c45c4a" strokeWidth={1.5} fill={`url(#${fillId})`} baseValue={0} isAnimationActive={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function FanTip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { dataKey?: string | number; value?: number | [number, number] }[];
+  label?: string | number;
+}) {
+  if (!active || !payload?.length) return null;
+  const get = (key: string) => payload.find((item) => item.dataKey === key)?.value;
+  const row = (name: string, value: number | [number, number] | undefined) =>
+    typeof value === "number" ? (
+      <div>
+        {name} {money(value)}
+      </div>
+    ) : null;
+  return (
+    <div style={{ ...TIP, padding: "8px 10px" }}>
+      <div style={{ marginBottom: 4, color: "#8b939e" }}>{stamp(String(label ?? ""))}</div>
+      {row("90th", get("p90"))}
+      {row("Median", get("p50"))}
+      {row("10th", get("p10"))}
+    </div>
+  );
+}
+
+function thin<T>(rows: T[], max = 280): T[] {
+  if (rows.length <= max) return rows;
+  const step = (rows.length - 1) / (max - 1);
+  const out: T[] = [];
+  for (let i = 0; i < max; i++) out.push(rows[Math.round(i * step)]);
+  return out;
+}
+
+export function MonteCarloChart({
+  data,
+  height = 260,
+}: {
+  data: { t: string; p10: number; p50: number; p90: number; band: [number, number]; paths?: number[] }[];
+  height?: number;
+}) {
+  const drawn = thin(data);
+  const days = spanDays(drawn);
+  const n = drawn[0]?.paths?.length ?? 0;
+  const series = drawn.map((d) => {
+    const row: Record<string, string | number | [number, number]> = {
+      t: d.t,
+      p10: d.p10,
+      p50: d.p50,
+      p90: d.p90,
+      band: d.band,
+    };
+    for (let i = 0; i < n; i++) row[`s${i}`] = d.paths?.[i] ?? d.p50;
+    return row;
+  });
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
@@ -120,69 +221,25 @@ export function DrawdownChart({ data, height = 220 }: { data: { t: string; drawd
             dataKey="t"
             tick={AXIS}
             tickFormatter={(v) => tickOf(String(v), days)}
-            minTickGap={56}
+            minTickGap={48}
             axisLine={{ stroke: "#2a2f36" }}
             tickLine={false}
           />
           <YAxis
             orientation="right"
             tick={AXIS}
-            width={72}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
-          />
-          <Tooltip
-            contentStyle={TIP}
-            labelFormatter={(v) => stamp(String(v))}
-            formatter={(v) => [`${Number(v).toFixed(2)}%`, "Drawdown"]}
-          />
-          <Line type="monotone" dataKey="dd" stroke="#c45c4a" dot={false} strokeWidth={1.6} isAnimationActive={false} />
-        </ComposedChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-export function MonteCarloChart({
-  data,
-  height = 260,
-}: {
-  data: { t: string; p50: number; band: [number, number] }[];
-  height?: number;
-}) {
-  const days = spanDays(data);
-  return (
-    <div className="w-full" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={data} margin={frame}>
-          <CartesianGrid stroke={GRID} vertical={false} />
-          <XAxis
-            dataKey="t"
-            tick={AXIS}
-            tickFormatter={(v) => tickOf(String(v), days)}
-            minTickGap={56}
-            axisLine={{ stroke: "#2a2f36" }}
-            tickLine={false}
-          />
-          <YAxis
-            orientation="right"
-            tick={AXIS}
-            width={72}
+            width={58}
             axisLine={false}
             tickLine={false}
             tickFormatter={(v) => money(Number(v))}
           />
-          <Tooltip
-            contentStyle={TIP}
-            labelFormatter={(v) => stamp(String(v))}
-            formatter={(v, name) => {
-              if (name === "band" && Array.isArray(v)) return [`${money(Number(v[0]))} – ${money(Number(v[1]))}`, "10–90%"];
-              return [money(Number(v)), "Median"];
-            }}
-          />
-          <Line type="monotone" dataKey="p10" stroke="#6f7782" dot={false} strokeWidth={1.1} isAnimationActive={false} />
-          <Line type="monotone" dataKey="p90" stroke="#6f7782" dot={false} strokeWidth={1.1} isAnimationActive={false} />
+          <Tooltip content={<FanTip />} />
+          <Area type="monotone" dataKey="band" stroke="none" fill="rgba(232,234,237,0.1)" isAnimationActive={false} />
+          {Array.from({ length: n }, (_, i) => (
+            <Line key={i} type="monotone" dataKey={`s${i}`} stroke="#4a515b" dot={false} strokeWidth={0.7} isAnimationActive={false} legendType="none" />
+          ))}
+          <Line type="monotone" dataKey="p10" stroke="#8b939e" dot={false} strokeDasharray="3 3" strokeWidth={1} isAnimationActive={false} />
+          <Line type="monotone" dataKey="p90" stroke="#8b939e" dot={false} strokeDasharray="3 3" strokeWidth={1} isAnimationActive={false} />
           <Line type="monotone" dataKey="p50" stroke="#e8eaed" dot={false} strokeWidth={1.7} isAnimationActive={false} />
         </ComposedChart>
       </ResponsiveContainer>
@@ -194,13 +251,13 @@ export function DistChart({ data, height = 260, label }: { data: { x: number; n:
   return (
     <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={frame}>
+        <BarChart data={data} margin={frame} barCategoryGap={1}>
           <CartesianGrid stroke={GRID} vertical={false} />
-          <XAxis dataKey="x" tick={AXIS} tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`} axisLine={{ stroke: "#2a2f36" }} tickLine={false} />
-          <YAxis orientation="right" tick={AXIS} width={42} axisLine={false} tickLine={false} />
+          <XAxis dataKey="x" tick={AXIS} minTickGap={28} tickFormatter={(v) => `${(Number(v) * 100).toFixed(1)}%`} axisLine={{ stroke: "#2a2f36" }} tickLine={false} />
+          <YAxis orientation="right" tick={AXIS} width={36} axisLine={false} tickLine={false} />
           <Tooltip contentStyle={TIP} formatter={(v) => [v, label]} labelFormatter={(v) => `${(Number(v) * 100).toFixed(2)}%`} />
-          <Line type="monotone" dataKey="n" stroke="#e8eaed" dot={false} strokeWidth={1.6} isAnimationActive={false} />
-        </LineChart>
+          <Bar dataKey="n" fill="#e8eaed" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+        </BarChart>
       </ResponsiveContainer>
     </div>
   );
