@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader, StartLink } from "@/components/SiteHeader";
-import { ProductGrid } from "@/components/ProductGrid";
-import { ThoughtTrace } from "@/components/ThoughtTrace";
+import { SiteHeader } from "@/components/SiteHeader";
+import { Showcase } from "@/components/Showcase";
 
 const WHY = [
   {
@@ -135,49 +135,39 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         <section className="relative overflow-hidden">
-          <div className="hero-lattice pointer-events-none absolute inset-0" aria-hidden />
-          <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-5 pb-8 pt-10 md:px-8 md:pb-20 md:pt-16 lg:min-h-[calc(100vh-4rem)] lg:grid-cols-2 lg:gap-16 lg:pb-16">
-            <div className="flex min-h-[calc(100svh-6.5rem)] flex-col lg:min-h-0">
-              <p className="hero-in font-mono text-[11px] uppercase tracking-[0.22em] text-mute" style={{ animationDelay: "40ms" }}>
-                MoleculeAI
-              </p>
-              <h1
-                className="hero-in mt-5 max-w-3xl font-serif text-4xl font-medium leading-[1.02] tracking-tight sm:text-5xl lg:text-7xl"
-                style={{ animationDelay: "120ms" }}
-              >
-                Frontier AI model
-                <br />
-                for agentic trading.
-              </h1>
-              <p
-                className="hero-in mt-5 max-w-xl text-base leading-relaxed text-mute sm:text-lg"
-                style={{ animationDelay: "220ms" }}
-              >
-                Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
-              </p>
-              <ThoughtTrace compact />
-              <div className="hero-in mt-6 lg:mt-8" style={{ animationDelay: "320ms" }}>
-                <StartLink />
-              </div>
-              <div className="min-h-8 flex-1 lg:hidden" aria-hidden />
-            </div>
-            <ThoughtTrace />
-          </div>
-        </section>
-
-        <section id="product" className="scroll-mt-20 border-t border-line">
-          <div className="mx-auto w-full max-w-6xl px-5 py-14 md:px-8 md:py-20">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Product</p>
-            <h2 className="mt-4 max-w-3xl font-serif text-4xl font-medium leading-tight tracking-tight sm:text-5xl md:text-6xl">
-              Describe the idea. The desk does the rest.
-            </h2>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-mute">
-              MoleculeAI builds the strategy, simulates it, and tests it.
+          <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center px-5 pb-2 pt-16 text-center md:px-8 md:pt-28">
+            <h1
+              className="hero-in font-sans text-[clamp(2.7rem,6.6vw,5.35rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text"
+              style={{ animationDelay: "40ms" }}
+            >
+              Frontier AI model
+              <br />
+              for agentic <span className="underline decoration-white/90 decoration-[1.5px] underline-offset-[0.14em]">trading.</span>
+            </h1>
+            <p
+              className="hero-in mt-6 max-w-xl text-base leading-relaxed text-mute sm:text-lg"
+              style={{ animationDelay: "140ms" }}
+            >
+              Describe a trading idea in natural language. MoleculeAI builds the strategy, simulates it, and tests it.
             </p>
-            <div className="mt-8">
-              <ProductGrid />
+            <div className="hero-in mt-8 flex flex-wrap items-center justify-center gap-3" style={{ animationDelay: "220ms" }}>
+              <Link
+                href="/login"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white px-5 text-sm font-medium text-black transition hover:opacity-90"
+              >
+                Get started for free
+                <span aria-hidden>›</span>
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex h-11 items-center rounded-full bg-[#1c1e22] px-5 text-sm font-medium text-text transition hover:bg-[#26292e]"
+              >
+                View pricing
+              </Link>
             </div>
+          </div>
+          <div id="product" className="mx-auto mt-14 w-full max-w-[1080px] scroll-mt-20 px-3 pb-10 sm:px-5 md:mt-20 md:pb-16">
+            <Showcase />
           </div>
         </section>
 
