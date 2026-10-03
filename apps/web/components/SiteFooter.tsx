@@ -1,12 +1,10 @@
 import Link from "next/link";
-import { Wordmark } from "@/components/Wordmark";
-import { StartLink } from "@/components/SiteHeader";
 
 const COLS = [
   {
     title: "Product",
     links: [
-      { href: "/#product", label: "Research" },
+      { href: "/#product", label: "Product" },
       { href: "/#solutions", label: "Solution" },
       { href: "/#features", label: "Features" },
     ],
@@ -16,7 +14,6 @@ const COLS = [
     links: [
       { href: "/pricing", label: "Pricing" },
       { href: "/contact", label: "Contact" },
-      { href: "/login", label: "Get started" },
     ],
   },
   {
@@ -30,36 +27,38 @@ const COLS = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t border-line bg-ink-900/40">
-      <div className="mx-auto w-full max-w-6xl px-5 py-12 md:px-8 md:py-16">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div className="max-w-sm">
-            <Wordmark className="h-7 w-auto" />
-            <p className="mt-4 text-sm leading-relaxed text-mute">
-              Describe the idea. The desk builds the rule, draws the line, and tests it.
-            </p>
+    <footer className="site-foot mt-auto">
+      <div className="top">
+        <div>
+          <div className="brand">
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <circle cx="12" cy="12" r="11" fill="#eceef1" />
+              <rect x="1" y="10.6" width="22" height="2.8" fill="#0a0b0d" />
+            </svg>
+            Molecule
           </div>
-          <StartLink />
+          <p className="tag">Describe the idea. The desk builds the rule, draws the line, and tests it.</p>
         </div>
-        <div className="mt-10 grid grid-cols-3 gap-6 border-t border-line pt-8">
+        <nav className="cols" aria-label="Footer">
           {COLS.map((col) => (
             <div key={col.title}>
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-mute">{col.title}</p>
-              <ul className="mt-4 space-y-2.5">
+              <h4>{col.title}</h4>
+              <ul>
                 {col.links.map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} className="text-sm text-text/90 transition-colors hover:text-text">
-                      {item.label}
-                    </Link>
+                    <Link href={item.href}>{item.label}</Link>
                   </li>
                 ))}
               </ul>
             </div>
           ))}
-        </div>
-        <div className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-5">
-          <p className="text-xs text-mute">© 2026 MoleculeAI</p>
-        </div>
+        </nav>
+      </div>
+      <div className="bar">
+        <span>© 2026 MoleculeAI</span>
+      </div>
+      <div className="mark" aria-hidden>
+        Molecule
       </div>
     </footer>
   );
