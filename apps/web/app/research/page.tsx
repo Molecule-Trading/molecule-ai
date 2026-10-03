@@ -192,10 +192,9 @@ export default function ResearchPage() {
         <main>
           <div className="hero">
             <h1 className="up" style={{ ["--i" as string]: 0 }}>{greeting}</h1>
-            <p className="sub up" style={{ ["--i" as string]: 1 }}>Build, backtest, or explore a new trading idea.</p>
             <form
               className="box up"
-              style={{ ["--i" as string]: 2 }}
+              style={{ ["--i" as string]: 1 }}
               onSubmit={(e) => {
                 e.preventDefault();
                 void submit();
@@ -251,7 +250,7 @@ export default function ResearchPage() {
               </div>
               {error && <p className="err">{error}</p>}
             </form>
-            <div className="chips up" style={{ ["--i" as string]: 3 }}>
+            <div className="chips up" style={{ ["--i" as string]: 2 }}>
               {PROMPTS.map(([label, prompt]) => (
                 <button key={label} type="button" className="chip" onClick={() => setText(prompt)}>{label}</button>
               ))}

@@ -1,0 +1,30 @@
+.desk-show,
+.desk-show .u,
+.desk-show .bub,
+.desk-show .wd,
+.desk-show .col,
+.desk-show .foot,
+.desk-show .foot a,
+.desk-show .tr,
+.desk-show .cth,
+.desk-show .sh,
+.desk-show .pdf div {
+  font-family: "IBM Plex Sans", system-ui, sans-serif !important;
+}
+.desk-show .n,
+.desk-show small,
+.desk-show .pdf em,
+.desk-show .st,
+.desk-show svg text {
+  font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace !important;
+}
+.space-y-6:has(> .perf),
+.space-y-8:has(> .perf) {
+  display: flex;
+  flex-direction: column;
+}
+.space-y-6:has(> .perf) > .perf,
+.space-y-8:has(> .perf) > .perf {
+  order: 100;
+  margin-top: 8px;
+}
