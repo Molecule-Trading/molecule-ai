@@ -19,9 +19,9 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         <section className="relative overflow-hidden">
-          <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center px-5 pb-2 pt-16 text-center md:px-8 md:pt-28">
+          <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center px-4 pb-2 pt-12 text-center sm:px-5 md:px-8 md:pt-28">
             <h1
-              className="hero-in font-sans text-[clamp(2.7rem,6.6vw,5.35rem)] font-medium leading-[1.04] tracking-[-0.035em] text-text"
+              className="hero-in font-sans text-[clamp(2.15rem,8.4vw,5.35rem)] font-medium leading-[1.05] tracking-[-0.035em] text-text"
               style={{ animationDelay: "40ms" }}
             >
               Frontier AI model
@@ -50,7 +50,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div id="product" className="mx-auto mt-14 w-full max-w-6xl scroll-mt-20 px-5 pb-24 md:mt-20 md:px-8">
+          <div id="product" className="mx-auto mt-12 w-full max-w-6xl scroll-mt-20 px-4 pb-16 sm:px-5 md:mt-20 md:px-8 md:pb-24">
             <Showcase />
           </div>
         </section>

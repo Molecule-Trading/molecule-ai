@@ -50,7 +50,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col px-5 pb-24 pt-16 md:pt-24">
-        <h1 className="font-serif text-4xl font-medium tracking-tight">Sign in</h1>
+        <h1 className="font-serif text-3xl font-medium tracking-tight sm:text-4xl">Sign in</h1>
         <p className="mt-2 text-sm text-mute">The desk is for signed-in accounts only.</p>
         <form onSubmit={submit} autoComplete="off" className="mt-8 space-y-4 rounded-2xl border border-line bg-ink-900 p-5">
           <label className="block text-xs text-mute">

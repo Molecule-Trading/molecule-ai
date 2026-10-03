@@ -67,7 +67,7 @@ export default function PortfolioPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-mute">Portfolio</div>
-          <h1 className="mt-1 font-serif text-4xl font-medium tracking-tight">Weighted book</h1>
+          <h1 className="mt-1 font-serif text-3xl font-medium tracking-tight sm:text-4xl">Weighted book</h1>
           <p className="mt-2 max-w-xl text-sm text-mute">Simulate strategies on portfolio level</p>
         </div>
         <Link href="/runs" className="rounded-full border border-line px-4 py-2 text-sm text-mute hover:text-text">
@@ -110,6 +110,7 @@ export default function PortfolioPage() {
                   <DrawdownChart data={book.bars} height={280} />
                 </div>
               </section>
+              <p className="perf">*Past performance does not guarantee future results.</p>
             </>
           ) : (
             <p className="mt-6 text-sm text-mute">Every weight is 0. Raise one to plot the book. The strategies stay here.</p>

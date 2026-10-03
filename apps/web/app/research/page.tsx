@@ -35,7 +35,6 @@ const EXAMPLES = [
 export default function ResearchPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const recRef = useRef<SpeechRec | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -51,69 +50,6 @@ export default function ResearchPage() {
   useEffect(() => {
     const p = loadProfile();
     setName([p.firstName, p.lastName].filter(Boolean).join(" "));
-  }, []);
-
-  useEffect(() => {
-    const cv = canvasRef.current;
-    if (!cv) return;
-    const cx = cv.getContext("2d");
-    if (!cx) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let W = 0;
-    let H = 0;
-    let mx = 0;
-    let my = 0;
-    let tx = 0;
-    let ty = 0;
-    let raf = 0;
-    const size = () => {
-      const d = Math.min(2, window.devicePixelRatio || 1);
-      W = window.innerWidth;
-      H = window.innerHeight;
-      cv.width = W * d;
-      cv.height = H * d;
-      cx.setTransform(d, 0, 0, d, 0, 0);
-    };
-    size();
-    const lines = Array.from({ length: 11 }, (_, i) => ({
-      f1: 0.0015 + i * 0.00006,
-      f2: 0.0038 - i * 0.00009,
-      p1: i * 1.7,
-      p2: i * 2.3,
-      a: 16 + i * 6.5,
-      s1: 0.00016 + i * 0.00002,
-      s2: 0.0003 - i * 0.00001,
-    }));
-    const onMove = (e: PointerEvent) => {
-      tx = (e.clientX / W - 0.5) * 14;
-      ty = (e.clientY / H - 0.5) * 10;
-    };
-    const draw = (t: number) => {
-      cx.clearRect(0, 0, W, H);
-      mx += (tx - mx) * 0.05;
-      my += (ty - my) * 0.05;
-      lines.forEach((l, i) => {
-        cx.beginPath();
-        const o = mx * (i + 1) * 0.8;
-        for (let x = -160; x <= W + 160; x += 8) {
-          const y = H * (0.5 + i * 0.045) + Math.sin(x * l.f1 + t * l.s1 + l.p1) * l.a + Math.sin(x * l.f2 - t * l.s2 + l.p2) * l.a * 0.5 + my * (i + 1) * 0.8;
-          if (x === -160) cx.moveTo(x + o, y);
-          else cx.lineTo(x + o, y);
-        }
-        cx.strokeStyle = i === 7 ? "rgba(61,220,151,.26)" : `rgba(165,185,225,${0.05 + i * 0.011})`;
-        cx.lineWidth = i === 7 ? 1.2 : 1;
-        cx.stroke();
-      });
-      if (!reduce) raf = requestAnimationFrame(draw);
-    };
-    window.addEventListener("resize", size);
-    window.addEventListener("pointermove", onMove);
-    raf = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("resize", size);
-      window.removeEventListener("pointermove", onMove);
-    };
   }, []);
 
   useEffect(() => {
@@ -251,7 +187,6 @@ export default function ResearchPage() {
   return (
     <PageShell center>
       <div className={`desk-research ${listening ? "listening" : ""} ${text ? "has" : ""}`}>
-        <canvas ref={canvasRef} className="bg" aria-hidden />
         <div className="dots" aria-hidden />
         <div className="glow" aria-hidden />
         <main>

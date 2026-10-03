@@ -17,7 +17,7 @@ export default function ContactPage() {
       <SiteHeader />
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-16 md:px-8 md:py-24">
         <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-mute">Contact</p>
-        <h1 className="mt-4 max-w-xl font-serif text-5xl font-medium leading-[1.02] tracking-tight md:text-6xl">Talk to the desk.</h1>
+        <h1 className="mt-4 max-w-xl font-serif text-4xl font-medium leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">Talk to the desk.</h1>
         <p className="mt-5 max-w-lg text-base leading-relaxed text-mute">
           A question about the product, a book, or a partnership. Leave it here. The desk reads every note.
         </p>

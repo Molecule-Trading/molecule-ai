@@ -86,7 +86,7 @@ export function Pricing({ onBack, embedded = false }: { onBack?: () => void; emb
           ‹ Back
         </button>
       )}
-      {!embedded && <h1 className="text-center font-serif text-4xl font-medium tracking-tight sm:text-5xl">Pricing</h1>}
+      {!embedded && <h1 className="text-center font-serif text-3xl font-medium tracking-tight sm:text-5xl">Pricing</h1>}
 
       {embedded && (
         <div className="rounded-2xl border border-line bg-ink-900 px-5 py-4">

@@ -174,7 +174,7 @@ function ResearchTile() {
   const phase = useStage(7, go, scroller);
   const m = view.metrics;
   return (
-    <Shell label="Research" rootRef={ref} scroller={scroller}>
+    <Shell label="Simulate" rootRef={ref} scroller={scroller}>
       <UserLine show={phase >= 1} phase={1}>
         Buy when the twenty-day return is positive and volatility is falling.
       </UserLine>
@@ -230,7 +230,7 @@ function PaperTile() {
   const phase = useStage(6, go, scroller);
   const m = view.metrics;
   return (
-    <Shell label="Paper" rootRef={ref} scroller={scroller}>
+    <Shell label="Notions" rootRef={ref} scroller={scroller}>
       {phase >= 1 && (
         <div data-phase={1} className="thread-in flex items-center gap-2.5 rounded-xl border border-line bg-ink-950/70 px-2.5 py-2">
           <span className="grid h-8 w-8 place-items-center rounded-md border border-line bg-ink-900 font-mono text-[9px] text-mute">PDF</span>
@@ -275,7 +275,7 @@ function MonteTile() {
   const scroller = useRef<HTMLDivElement>(null);
   const phase = useStage(5, go, scroller);
   return (
-    <Shell label="Simulate" rootRef={ref} scroller={scroller}>
+    <Shell label="Monte Carlo" rootRef={ref} scroller={scroller}>
       <UserLine show={phase >= 1} phase={1}>
         Run a Monte Carlo on my crypto strategy, with in-sample and out-of-sample data.
       </UserLine>
@@ -317,7 +317,7 @@ function VoiceTile() {
   const phase = useStage(5, go, scroller);
   const listening = phase === 1;
   return (
-    <Shell label="Voice" rootRef={ref} scroller={scroller}>
+    <Shell label="Natural Language" rootRef={ref} scroller={scroller}>
       {phase >= 1 && (
         <div data-phase={1} className="thread-in flex items-center gap-3">
           <span className={`grid h-9 w-9 place-items-center rounded-full border border-line bg-ink-950 ${listening ? "ring-2 ring-white/15" : ""}`}>

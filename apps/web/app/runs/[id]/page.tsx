@@ -104,18 +104,18 @@ export default function RunDetailPage() {
 
   return (
     <PageShell>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <Link href="/runs" className="text-sm text-mute transition-colors hover:text-text">← Strategies</Link>
-            <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight md:text-4xl">{strategyTitle(run)}</h1>
+            <h1 className="mt-2 font-serif text-2xl font-medium tracking-tight sm:text-3xl md:text-4xl">{strategyTitle(run)}</h1>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-mute">{run.hypothesis}</p>
             {untested.length > 0 && (
               <p className="mt-3 max-w-3xl text-sm text-amber-200/90">Not tested: {untested.join(" ")}</p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={removeStrategy} className="rounded-full border border-line px-4 py-2 text-sm text-red-400">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <button type="button" onClick={removeStrategy} className="rounded-full border border-line px-3 py-2 text-sm text-red-400 sm:px-4">
               Delete
             </button>
             {held ? (
@@ -128,8 +128,8 @@ export default function RunDetailPage() {
           </div>
         </div>
 
-        <div className="relative flex flex-wrap items-center gap-3">
-          <button type="button" onClick={() => setCal((v) => !v)} className="rounded-full border border-line px-3 py-1.5 text-xs text-mute hover:text-text">
+        <div className="relative flex max-w-full flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setCal((v) => !v)} className="max-w-full truncate rounded-full border border-line px-3 py-1.5 text-[11px] text-mute hover:text-text sm:text-xs">
             {(from || full.bars[0]?.t)} — {(to || full.bars[full.bars.length - 1]?.t)}
           </button>
           {cal && (
@@ -212,8 +212,9 @@ export default function RunDetailPage() {
             <DistChart key={`vd-${from}-${to}-${book}`} data={volDist} label="Sessions" height={240} />
           </ChartCard>
         </div>
+        <p className="perf">*Past performance does not guarantee future results.</p>
 
-        <section className="overflow-x-auto rounded-xl border border-line">
+        <section className="max-w-full overflow-x-auto rounded-xl border border-line">
           <table className="w-full min-w-[980px] text-right text-xs">
             <thead className="font-mono text-[10px] uppercase tracking-wide text-mute">
               <tr>
@@ -247,8 +248,8 @@ export default function RunDetailPage() {
             <h2 className="font-mono text-[11px] uppercase tracking-[0.16em] text-mute">Trade book</h2>
             <span className="font-mono text-xs text-mute">{view.trades.length} fills</span>
           </div>
-          <div className="max-h-[480px] overflow-auto rounded-xl border border-line">
-            <table className="w-full text-left text-xs">
+          <div className="max-h-[420px] max-w-full overflow-auto rounded-xl border border-line sm:max-h-[480px]">
+            <table className="w-full min-w-[640px] text-left text-xs">
               <thead className="sticky top-0 bg-ink-900 font-mono text-mute">
                 <tr>
                   <th className="px-3 py-2">Timestamp</th>
@@ -328,7 +329,7 @@ function RangePopover({
   const years = Array.from({ length: Math.max(0, y1 - y0 + 1) }, (_, i) => y0 + i);
 
   return (
-    <div className="absolute left-0 top-10 z-30 w-[320px] rounded-xl border border-line bg-ink-950 p-3 shadow-2xl">
+    <div className="absolute left-0 top-11 z-30 w-[min(20rem,calc(100vw-2.5rem))] rounded-xl border border-line bg-ink-950 p-3 shadow-2xl">
       <div className="flex flex-wrap gap-1">
         {years.map((yr) => (
           <button key={yr} type="button" onClick={() => setCursor(`${yr}-${String(m).padStart(2, "0")}`)} className={`rounded-full px-2 py-0.5 text-[11px] ${yr === y ? "bg-text text-ink-950" : "text-mute hover:text-text"}`}>
@@ -367,7 +368,7 @@ function signed(v: number) {
 
 function ChartCard({ title, note, children }: { title: string; note: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-line bg-ink-900/40 p-4">
+    <div className="rounded-xl border border-line bg-ink-900/40 p-3 sm:p-4">
       <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-sm">{title}</h3>
         <p className="text-[11px] text-mute">{note}</p>

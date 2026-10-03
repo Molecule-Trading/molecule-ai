@@ -84,9 +84,9 @@ function SettingsInner() {
   return (
     <PageShell>
       <div className="mx-auto w-full max-w-5xl">
-      <div className="flex flex-col gap-8 md:flex-row md:gap-10">
+      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
         <aside className="w-full shrink-0 md:w-56">
-          <div className="pb-4">
+          <div className="pb-3 md:pb-4">
             <div className="truncate text-sm">
                 {profile.firstName || profile.lastName
                   ? `${profile.firstName} ${profile.lastName}`.trim()
@@ -94,7 +94,7 @@ function SettingsInner() {
               </div>
               <div className="truncate text-xs text-mute">{profile.email || "No email set"}</div>
           </div>
-          <nav>
+          <nav className="-mx-1 flex gap-1 overflow-x-auto pb-1 md:mx-0 md:block md:overflow-visible md:pb-0">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -103,7 +103,7 @@ function SettingsInner() {
                   setTab(t.id);
                   router.replace(`/settings?tab=${t.id}`, { scroll: false });
                 }}
-                className={`mb-1 block w-full rounded-md px-3 py-2 text-left text-sm ${
+                className={`shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-left text-sm md:mb-1 md:block md:w-full md:rounded-md ${
                   tab === t.id ? "bg-ink-800 text-text" : "text-mute hover:text-text"
                 }`}
               >
@@ -111,7 +111,7 @@ function SettingsInner() {
               </button>
             ))}
           </nav>
-          <div className="mt-4 border-t border-line pt-4">
+          <div className="mt-3 border-t border-line pt-3 md:mt-4 md:pt-4">
             <button type="button" onClick={signOut} className="px-3 text-sm text-red-400 hover:text-red-300">
               Sign out
             </button>
@@ -121,9 +121,9 @@ function SettingsInner() {
         <main className="min-w-0 flex-1">
           {tab === "profile" && (
             <section className="max-w-2xl">
-              <h1 className="font-serif text-4xl font-medium">Profile</h1>
+              <h1 className="font-serif text-3xl font-medium sm:text-4xl">Profile</h1>
               <p className="mt-3 text-sm text-mute">Your name and account details.</p>
-              <div className="mt-8 rounded-2xl border border-line bg-ink-900 p-8">
+              <div className="mt-6 rounded-2xl border border-line bg-ink-900 p-5 sm:mt-8 sm:p-8">
                 <h2 className="text-sm font-medium">Your details</h2>
                 <p className="mt-2 text-xs text-mute">This is how your name appears across Molecule.</p>
                 <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -166,7 +166,7 @@ function SettingsInner() {
 
           {tab === "safety" && (
             <section className="max-w-xl">
-              <h1 className="font-serif text-4xl font-medium">Automation & Safety</h1>
+              <h1 className="font-serif text-3xl font-medium sm:text-4xl">Automation & Safety</h1>
               <p className="mt-2 text-sm text-mute">Guardrails for this browser session.</p>
               <div className="mt-6 space-y-3 rounded-2xl border border-line bg-ink-900 p-5">
                 <label className="flex items-center justify-between text-sm">
@@ -199,7 +199,7 @@ function SettingsInner() {
 
           {tab === "security" && (
             <section className="max-w-xl">
-              <h1 className="font-serif text-4xl font-medium">Security</h1>
+              <h1 className="font-serif text-3xl font-medium sm:text-4xl">Security</h1>
               <p className="mt-2 text-sm text-mute">Password, two-factor authentication, and sessions.</p>
               <div className="mt-6 rounded-2xl border border-line bg-ink-900">
                 <div className="border-b border-line px-5 py-4">
@@ -249,7 +249,7 @@ function SettingsInner() {
 
           {tab === "billing" && (
             <section className="max-w-3xl">
-              <h1 className="font-serif text-4xl font-medium">Billing</h1>
+              <h1 className="font-serif text-3xl font-medium sm:text-4xl">Billing</h1>
               <p className="mt-2 text-sm text-mute">Your plan and payment method.</p>
               <div className="mt-8">
                 <Pricing embedded />

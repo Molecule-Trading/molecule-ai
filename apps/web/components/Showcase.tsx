@@ -60,7 +60,7 @@ export function Showcase() {
               <div className="ch"><small>Volatility distribution</small><svg data-chart="hist" data-kind="vol" data-seed="67875" /></div>
             </div>
           </div>
-          <div className="foot"><span>Research</span><a href="/login">Explore →</a></div>
+          <div className="foot"><span>Simulate</span><a href="/login">Explore →</a></div>
         </article>
 
         <article className="card" id="c2">
@@ -101,7 +101,7 @@ export function Showcase() {
               <div><small>Trades</small><span className="n" data-v="11" data-d="0" data-plain="1" /></div>
             </div>
           </div>
-          <div className="foot"><span>Paper</span><a href="/login">Explore →</a></div>
+          <div className="foot"><span>Notions</span><a href="/login">Explore →</a></div>
         </article>
 
         <article className="card" id="c3">
@@ -143,7 +143,7 @@ export function Showcase() {
               </div>
             </div>
           </div>
-          <div className="foot"><span>Simulate</span><a href="/login">Explore →</a></div>
+          <div className="foot"><span>Monte Carlo</span><a href="/login">Explore →</a></div>
         </article>
 
         <article className="card" id="c4">
@@ -171,7 +171,7 @@ export function Showcase() {
               <svg data-chart="eq" data-seed="930" />
             </div>
           </div>
-          <div className="foot"><span>Voice</span><a href="/login">Explore →</a></div>
+          <div className="foot"><span>Natural Language</span><a href="/login">Explore →</a></div>
         </article>
       </div>
     </div>

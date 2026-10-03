@@ -76,8 +76,8 @@ export function SiteHeader() {
         scrolled || open ? "border-b border-line bg-ink-950/80 backdrop-blur-xl" : "border-b border-transparent"
       }`}
     >
-      <div className="relative mx-auto flex h-16 w-full max-w-6xl items-center px-5 md:px-8">
-        <Wordmark className="h-7 w-auto sm:h-8" />
+      <div className="relative mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 sm:h-16 sm:px-5 md:px-8">
+        <Wordmark className="h-6 w-auto max-w-[38vw] object-contain object-left sm:h-8 sm:max-w-none" />
 
         <nav
           className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-line bg-ink-900/80 px-1.5 py-1 backdrop-blur-md lg:flex"
@@ -122,7 +122,7 @@ export function SiteHeader() {
               />
             </span>
           </button>
-          <StartLink className="px-3 text-xs sm:px-3.5 sm:text-[13px]" />
+          <StartLink className="h-8 px-2.5 text-[11px] sm:h-9 sm:px-3.5 sm:text-[13px]" />
         </div>
       </div>
 

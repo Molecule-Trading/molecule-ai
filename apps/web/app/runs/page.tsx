@@ -145,10 +145,7 @@ export default function RunsPage() {
                   <div className="hero">
                     <div className="ret">
                       <small>Return</small>
-                      <b className={ret >= 0 ? "pos" : "neg"}>
-                        {ret >= 0 ? "+" : "−"}
-                        {Math.abs(ret).toFixed(1)}%
-                      </b>
+                      <b className={ret >= 0 ? "pos" : "neg"}>{`${ret >= 0 ? "+" : "−"}${Math.abs(ret).toFixed(1)}%`}</b>
                     </div>
                     <div className="spark">
                       <Spark ret={ret} seed={seed} />
@@ -169,6 +166,7 @@ export default function RunsPage() {
                     </div>
                   </div>
                 </Link>
+                <p className="perf">*Past performance does not guarantee future results.</p>
                 <div className="foot">
                   <span className="chip">
                     <i />
@@ -176,7 +174,17 @@ export default function RunsPage() {
                   </span>
                   <div className="act">
                     <button type="button" className="lnk add" onClick={() => toggleBook(run)}>
-                      {inP ? "Remove from portfolio" : "Add to portfolio"}
+                      {inP ? (
+                        <>
+                          <span className="hidden sm:inline">Remove from portfolio</span>
+                          <span className="sm:hidden">Remove</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="hidden sm:inline">Add to portfolio</span>
+                          <span className="sm:hidden">Add</span>
+                        </>
+                      )}
                     </button>
                     <button
                       type="button"
