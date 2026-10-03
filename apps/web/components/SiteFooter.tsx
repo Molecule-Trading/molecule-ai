@@ -57,16 +57,8 @@ export function SiteFooter() {
             </div>
           ))}
         </div>
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
+        <div className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-5">
           <p className="text-xs text-mute">© 2026 MoleculeAI</p>
-          <div className="flex items-center gap-4">
-            <a href="https://x.com/chrislernunes" className="text-xs text-mute transition-colors hover:text-text">
-              X
-            </a>
-            <a href="mailto:nuneschrisler@gmail.com" className="text-xs text-mute transition-colors hover:text-text">
-              Email
-            </a>
-          </div>
         </div>
       </div>
     </footer>

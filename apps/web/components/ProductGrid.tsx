@@ -1,25 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { DrawdownChart, EquityChart, MonteCarloChart } from "@/components/Charts";
 import { fanOf, splitOf, windowOf } from "@/lib/sampleBook";
 
 const view = windowOf("MAX");
 const split = splitOf(view.bars);
 const fan = fanOf(view.bars);
 
-function take(values: number[], n = 42) {
-  if (values.length <= n) return values;
-  const step = (values.length - 1) / (n - 1);
-  return Array.from({ length: n }, (_, i) => values[Math.round(i * step)]);
+function useInView() {
+  const ref = useRef<HTMLElement>(null);
+  const [go, setGo] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setGo(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setGo(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.32, rootMargin: "48px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  return { ref, go };
 }
 
-const EQUITY = take(view.bars.map((b) => b.equity));
-const P10 = take(fan.map((p) => p.p10));
-const P50 = take(fan.map((p) => p.p50));
-const P90 = take(fan.map((p) => p.p90));
-
-function usePlay(steps: number, go: boolean, lag = 0) {
+function useStage(steps: number, go: boolean, scroller: RefObject<HTMLDivElement | null>) {
   const [phase, setPhase] = useState(0);
   useEffect(() => {
     if (!go) return;
@@ -28,85 +43,121 @@ function usePlay(steps: number, go: boolean, lag = 0) {
       return;
     }
     if (phase >= steps) return;
-    const wait = phase === 0 ? 80 + lag : 560;
+    const wait = phase === 0 ? 70 : 620;
     const id = window.setTimeout(() => setPhase((p) => Math.min(steps, p + 1)), wait);
     return () => window.clearTimeout(id);
-  }, [go, phase, steps, lag]);
+  }, [go, phase, steps]);
+
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || phase < 1) return;
+    const node = el.querySelector(`[data-phase="${phase}"]`) as HTMLElement | null;
+    if (!node) return;
+    el.scrollTo({ top: Math.max(0, node.offsetTop - 10), behavior: "smooth" });
+  }, [phase, scroller]);
+
   return phase;
 }
 
-function pathOf(values: number[]) {
-  if (values.length < 2) return "";
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-  return values
-    .map((v, i) => {
-      const x = 2 + (i / (values.length - 1)) * 96;
-      const y = 12 + (1 - (v - min) / span) * 76;
-      return `${i ? "L" : "M"}${x.toFixed(2)} ${y.toFixed(2)}`;
-    })
-    .join(" ");
+function pct(v: number | null | undefined) {
+  if (v == null || Number.isNaN(v)) return "—";
+  const x = v * 100;
+  return `${x > 0 ? "+" : ""}${x.toFixed(2)}%`;
 }
 
-function LinePlot({ values, on, tone = "#e8eaed" }: { values: number[]; on: boolean; tone?: string }) {
-  const d = useMemo(() => pathOf(values), [values]);
-  if (!d) return null;
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full" aria-hidden>
-      <line x1="2" y1="88" x2="98" y2="88" stroke="rgba(232,234,237,0.08)" strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
-      <path
-        d={d}
-        fill="none"
-        stroke={tone}
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        vectorEffect="non-scaling-stroke"
-        pathLength={1}
-        strokeDasharray={1}
-        strokeDashoffset={on ? 0 : 1}
-        style={{ transition: "stroke-dashoffset 980ms cubic-bezier(0.22, 0.8, 0.2, 1)" }}
-      />
-    </svg>
-  );
+function num(v: number | null | undefined) {
+  return v == null ? "—" : v.toFixed(2);
 }
 
-function Bubble({ children, show, right = false }: { children: ReactNode; show: boolean; right?: boolean }) {
+function tone(v: number | null | undefined, down = false) {
+  if (down || (v != null && v < 0)) return "text-red-400";
+  if (v != null && v > 0) return "text-emerald-400";
+  return "text-text";
+}
+
+function Mark() {
+  return <img src="/icon-32.png" alt="" className="h-4 w-4 shrink-0" />;
+}
+
+function Think({ show, label }: { show: boolean; label: string }) {
+  if (!show) return null;
   return (
-    <p
-      className={`max-w-[96%] rounded-2xl px-2.5 py-1.5 text-[11px] leading-snug transition duration-500 sm:text-xs ${
-        right ? "ml-auto rounded-br-md bg-white/[0.06] text-text" : "text-text/90"
-      } ${show ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0"}`}
-    >
-      {children}
+    <p data-phase="think" className="thread-in flex items-center gap-2 text-[12px] text-mute">
+      {label}
+      <span className="inline-flex gap-1" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="h-1 w-1 animate-pulse rounded-full bg-mute" style={{ animationDelay: `${i * 140}ms` }} />
+        ))}
+      </span>
     </p>
   );
 }
 
-function Mini({ k, v }: { k: string; v: string }) {
+function UserLine({ show, phase, children }: { show: boolean; phase: number; children: ReactNode }) {
+  if (!show) return null;
   return (
-    <div className="min-w-0">
-      <p className="font-mono text-[8px] uppercase tracking-[0.14em] text-mute">{k}</p>
-      <p className="mt-0.5 truncate font-mono text-[11px] text-text">{v}</p>
+    <div data-phase={phase} className="thread-in flex justify-end">
+      <p className="max-w-[92%] rounded-2xl rounded-br-md bg-ink-800 px-3 py-2 text-[12px] leading-relaxed text-text sm:text-[13px]">{children}</p>
     </div>
   );
 }
 
-function pct(v: number | null) {
-  if (v == null || Number.isNaN(v)) return "—";
-  const x = v * 100;
-  return `${x > 0 ? "+" : ""}${x.toFixed(1)}%`;
-}
-
-function num(v: number | null) {
-  return v == null ? "—" : v.toFixed(2);
-}
-
-function Tile({ label, children }: { label: string; children: ReactNode }) {
+function Agent({ show, phase, children }: { show: boolean; phase: number; children: ReactNode }) {
+  if (!show) return null;
   return (
-    <article className="flex h-[232px] flex-col overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#121316] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[300px] lg:h-[340px]">
-      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 sm:gap-2.5 sm:p-4">{children}</div>
+    <div data-phase={phase} className="thread-in flex gap-2">
+      <Mark />
+      <div className="min-w-0 flex-1 space-y-2 text-[12px] leading-relaxed text-text sm:text-[13px]">{children}</div>
+    </div>
+  );
+}
+
+function Metric({ k, v, bad, good }: { k: string; v: string; bad?: boolean; good?: boolean }) {
+  return (
+    <div className="min-w-0 bg-ink-950 px-2 py-2 sm:px-2.5 sm:py-2.5">
+      <p className="truncate font-mono text-[8px] uppercase tracking-[0.12em] text-mute sm:text-[9px]">{k}</p>
+      <p className={`mt-1 truncate font-mono text-[11px] leading-none sm:text-xs ${bad ? "text-red-400" : good ? "text-emerald-400" : "text-text"}`}>{v}</p>
+    </div>
+  );
+}
+
+function Reveal({ on, children }: { on: boolean; children: ReactNode }) {
+  return (
+    <div
+      className="overflow-hidden transition-[clip-path,opacity] duration-1000 ease-out"
+      style={{ clipPath: on ? "inset(0 0 0 0)" : "inset(0 100% 0 0)", opacity: on ? 1 : 0 }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Shell({
+  label,
+  rootRef,
+  scroller,
+  children,
+}: {
+  label: string;
+  rootRef: RefObject<HTMLElement | null>;
+  scroller: RefObject<HTMLDivElement | null>;
+  children: ReactNode;
+}) {
+  return (
+    <article
+      ref={rootRef}
+      className="flex h-[440px] flex-col overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#101114] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:h-[500px] lg:h-[540px]"
+    >
+      <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
+        <div className="flex items-center gap-2">
+          <Mark />
+          <p className="text-[13px] text-text">MoleculeAI</p>
+        </div>
+        <p className="font-mono text-[10px] text-mute">molecule 1.0</p>
+      </div>
+      <div ref={scroller} className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-3.5 sm:py-4">
+        <div className="flex min-h-full flex-col gap-3">{children}</div>
+      </div>
       <div className="flex items-center justify-between border-t border-white/[0.06] px-3.5 py-2.5">
         <span className="text-[13px] text-text">{label}</span>
         <Link href="/login" className="text-[13px] text-mute transition-colors hover:text-text">
@@ -117,155 +168,205 @@ function Tile({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function ResearchTile({ go }: { go: boolean }) {
-  const phase = usePlay(4, go, 0);
+function ResearchTile() {
+  const { ref, go } = useInView();
+  const scroller = useRef<HTMLDivElement>(null);
+  const phase = useStage(7, go, scroller);
+  const m = view.metrics;
   return (
-    <Tile label="Research">
-      <Bubble show={phase >= 1} right>
+    <Shell label="Research" rootRef={ref} scroller={scroller}>
+      <UserLine show={phase >= 1} phase={1}>
         Buy when the twenty-day return is positive and volatility is falling.
-      </Bubble>
-      <Bubble show={phase >= 2}>
-        <strong className="font-semibold">Entry</strong> is the close, and only if both gates are on.
-      </Bubble>
-      <div className={`min-h-0 flex-1 transition-opacity duration-500 ${phase >= 3 ? "opacity-100" : "opacity-0"}`}>
-        <LinePlot values={EQUITY} on={phase >= 3} tone="#34d399" />
-      </div>
-      <div className={`grid grid-cols-3 gap-2 transition duration-500 ${phase >= 4 ? "opacity-100" : "opacity-0"}`}>
-        <Mini k="Return" v={pct(view.metrics.total_return)} />
-        <Mini k="Sharpe" v={num(view.metrics.sharpe)} />
-        <Mini k="Max DD" v={pct(view.metrics.max_drawdown)} />
-      </div>
-    </Tile>
+      </UserLine>
+      <Think show={phase === 2} label="Reading the rule" />
+      {phase >= 3 && (
+        <Agent show phase={3}>
+          <p>Long only when both gates are on.</p>
+          {phase >= 4 && (
+            <p data-phase={4} className="thread-in">
+              <strong className="font-semibold">Entry</strong> when the twenty-session return is above zero and realized volatility is below its own median.
+            </p>
+          )}
+          {phase >= 5 && (
+            <p data-phase={5} className="thread-in">
+              <strong className="font-semibold">Exit</strong> when either gate fails. Costs stay on the path.
+            </p>
+          )}
+          {phase >= 6 && (
+            <div data-phase={6} className="thread-in grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-6">
+              <Metric k="CAGR" v={pct(m.cagr)} good={(m.cagr ?? 0) > 0} bad={(m.cagr ?? 0) < 0} />
+              <Metric k="Sharpe" v={num(m.sharpe)} good={(m.sharpe ?? 0) > 0} />
+              <Metric k="Sortino" v={num(m.sortino)} good={(m.sortino ?? 0) > 0} />
+              <Metric k="Calmar" v={num(m.calmar)} good={(m.calmar ?? 0) > 0} />
+              <Metric k="Max DD" v={pct(m.max_drawdown)} bad />
+              <Metric k="Trades" v={String(view.trades.length)} />
+            </div>
+          )}
+          {phase >= 7 && (
+            <div data-phase={7} className="thread-in grid grid-cols-2 gap-2">
+              <div className="min-w-0 rounded-xl border border-line bg-ink-950/50 px-1.5 py-2">
+                <p className="mb-1 px-1 text-[10px] text-mute">Equity curve</p>
+                <Reveal on>
+                  <EquityChart data={view.bars} height={128} />
+                </Reveal>
+              </div>
+              <div className="min-w-0 rounded-xl border border-line bg-ink-950/50 px-1.5 py-2">
+                <p className="mb-1 px-1 text-[10px] text-mute">Underwater</p>
+                <Reveal on>
+                  <DrawdownChart data={view.bars} height={128} />
+                </Reveal>
+              </div>
+            </div>
+          )}
+        </Agent>
+      )}
+    </Shell>
   );
 }
 
-function PaperTile({ go }: { go: boolean }) {
-  const phase = usePlay(6, go, 160);
+function PaperTile() {
+  const { ref, go } = useInView();
+  const scroller = useRef<HTMLDivElement>(null);
+  const phase = useStage(6, go, scroller);
+  const m = view.metrics;
   return (
-    <Tile label="Paper">
-      <div className={`flex items-center gap-2 transition duration-500 ${phase >= 1 ? "opacity-100" : "opacity-0"}`}>
-        <span className="grid h-6 w-6 place-items-center rounded-md border border-line bg-ink-950 font-mono text-[8px] text-mute">PDF</span>
-        <span className="truncate text-[11px] text-mute">strategy_note.pdf</span>
-      </div>
-      <Bubble show={phase >= 2} right>
+    <Shell label="Paper" rootRef={ref} scroller={scroller}>
+      {phase >= 1 && (
+        <div data-phase={1} className="thread-in flex items-center gap-2.5 rounded-xl border border-line bg-ink-950/70 px-2.5 py-2">
+          <span className="grid h-8 w-8 place-items-center rounded-md border border-line bg-ink-900 font-mono text-[9px] text-mute">PDF</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[12px] text-text">strategy_note.pdf</span>
+            <span className="block font-mono text-[10px] text-mute">Attached · 6 pages</span>
+          </span>
+        </div>
+      )}
+      <UserLine show={phase >= 2} phase={2}>
         Backtest this strategy paper for me.
-      </Bubble>
-      <div className="min-h-[1.1rem]">
-        {phase === 3 && (
-          <p className="flex items-center gap-2 text-[11px] text-mute">
-            Thinking
-            <span className="inline-flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="h-1 w-1 animate-pulse rounded-full bg-mute" style={{ animationDelay: `${i * 140}ms` }} />
-              ))}
-            </span>
-          </p>
-        )}
-        <p className={`text-[11px] leading-snug text-mute transition duration-500 ${phase >= 4 ? "opacity-100" : "opacity-0"}`}>
-          The note became a daily rule. The line is the book.
-        </p>
-      </div>
-      <div className={`min-h-0 flex-1 transition-opacity duration-500 ${phase >= 5 ? "opacity-100" : "opacity-0"}`}>
-        <LinePlot values={EQUITY} on={phase >= 5} />
-      </div>
-      <div className={`grid grid-cols-3 gap-2 transition duration-500 ${phase >= 6 ? "opacity-100" : "opacity-0"}`}>
-        <Mini k="Return" v={pct(view.metrics.total_return)} />
-        <Mini k="Sharpe" v={num(view.metrics.sharpe)} />
-        <Mini k="Trades" v={String(view.metrics.trade_count)} />
-      </div>
-    </Tile>
+      </UserLine>
+      <Think show={phase === 3} label="Reading the note" />
+      {phase >= 4 && (
+        <Agent show phase={4}>
+          <p>The note became a daily rule. Long only when the twenty-session return is above zero and realized volatility is under its own median.</p>
+          {phase >= 5 && <p className="text-mute">Entry is the next open. Fees stay on the path. The line is the book.</p>}
+          {phase >= 5 && (
+            <div data-phase={5} className="rounded-xl border border-line bg-ink-950/50 px-1.5 py-2">
+              <p className="mb-1 px-1 text-[10px] text-mute">Equity curve</p>
+              <Reveal on={phase >= 5}>
+                <EquityChart data={view.bars} height={148} />
+              </Reveal>
+            </div>
+          )}
+          {phase >= 6 && (
+            <div data-phase={6} className="thread-in grid grid-cols-4 gap-px overflow-hidden rounded-xl border border-line bg-line">
+              <Metric k="Return" v={pct(m.total_return)} good={(m.total_return ?? 0) > 0} bad={(m.total_return ?? 0) < 0} />
+              <Metric k="Sharpe" v={num(m.sharpe)} good={(m.sharpe ?? 0) > 0} />
+              <Metric k="Max DD" v={pct(m.max_drawdown)} bad />
+              <Metric k="Trades" v={String(view.trades.length)} />
+            </div>
+          )}
+        </Agent>
+      )}
+    </Shell>
   );
 }
 
-function MonteTile({ go }: { go: boolean }) {
-  const phase = usePlay(4, go, 280);
+function MonteTile() {
+  const { ref, go } = useInView();
+  const scroller = useRef<HTMLDivElement>(null);
+  const phase = useStage(5, go, scroller);
   return (
-    <Tile label="Simulate">
-      <Bubble show={phase >= 1} right>
+    <Shell label="Simulate" rootRef={ref} scroller={scroller}>
+      <UserLine show={phase >= 1} phase={1}>
         Run a Monte Carlo on my crypto strategy, with in-sample and out-of-sample data.
-      </Bubble>
-      <p className={`text-[11px] leading-snug text-mute transition duration-500 ${phase >= 2 ? "opacity-100" : "opacity-0"}`}>
-        Paths redrawn from the daily book. Split is seventy, thirty.
-      </p>
-      <div className={`relative min-h-0 flex-1 transition-opacity duration-500 ${phase >= 3 ? "opacity-100" : "opacity-0"}`}>
-        <LinePlot values={P90} on={phase >= 3} tone="rgba(232,234,237,0.35)" />
-        <div className="absolute inset-0">
-          <LinePlot values={P10} on={phase >= 3} tone="rgba(232,234,237,0.35)" />
-        </div>
-        <div className="absolute inset-0">
-          <LinePlot values={P50} on={phase >= 3} tone="#e8eaed" />
-        </div>
-      </div>
-      <div className={`grid grid-cols-2 gap-2 transition duration-500 ${phase >= 4 ? "opacity-100" : "opacity-0"}`}>
-        <Mini k="In sample" v={pct(split.inn.cagr)} />
-        <Mini k="Out of sample" v={pct(split.out.cagr)} />
-      </div>
-    </Tile>
+      </UserLine>
+      <Think show={phase === 2} label="Resampling the book" />
+      {phase >= 3 && (
+        <Agent show phase={3}>
+          <p>Paths redrawn from the daily book. The split is seventy, thirty. The fan is the 10th, the median, and the 90th.</p>
+          {phase >= 4 && (
+            <div data-phase={4} className="rounded-xl border border-line bg-ink-950/50 px-1.5 py-2">
+              <p className="mb-1 px-1 text-[10px] text-mute">Monte Carlo</p>
+              <Reveal on={phase >= 4}>
+                <MonteCarloChart data={fan} height={168} />
+              </Reveal>
+            </div>
+          )}
+          {phase >= 5 && (
+            <div data-phase={5} className="thread-in grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line">
+              <div className="bg-ink-950 px-2.5 py-2">
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-mute">In sample</p>
+                <p className={`mt-1 font-mono text-sm ${tone(split.inn.cagr)}`}>{pct(split.inn.cagr)}</p>
+                <p className="mt-1 font-mono text-[10px] text-mute">Sharpe {num(split.inn.sharpe)}</p>
+              </div>
+              <div className="bg-ink-950 px-2.5 py-2">
+                <p className="font-mono text-[9px] uppercase tracking-[0.14em] text-mute">Out of sample</p>
+                <p className={`mt-1 font-mono text-sm ${tone(split.out.cagr)}`}>{pct(split.out.cagr)}</p>
+                <p className="mt-1 font-mono text-[10px] text-mute">Sharpe {num(split.out.sharpe)}</p>
+              </div>
+            </div>
+          )}
+        </Agent>
+      )}
+    </Shell>
   );
 }
 
-function VoiceTile({ go }: { go: boolean }) {
-  const phase = usePlay(4, go, 400);
+function VoiceTile() {
+  const { ref, go } = useInView();
+  const scroller = useRef<HTMLDivElement>(null);
+  const phase = useStage(5, go, scroller);
   const listening = phase === 1;
   return (
-    <Tile label="Voice">
-      <div className={`flex items-center gap-2.5 transition duration-500 ${phase >= 1 ? "opacity-100" : "opacity-0"}`}>
-        <span className="grid h-7 w-7 place-items-center rounded-full border border-line bg-ink-950">
-          <span className={`h-2 w-2 rounded-full bg-text ${listening ? "animate-pulse" : ""}`} />
-        </span>
-        <span className="flex h-5 items-end gap-[3px]" aria-hidden>
-          {[0.4, 0.75, 1, 0.55, 0.9, 0.45, 0.7, 0.5].map((h, i) => (
-            <span
-              key={i}
-              className="w-[3px] rounded-full bg-text/80"
-              style={{
-                height: `${Math.round(h * 18)}px`,
-                transformOrigin: "bottom",
-                animation: listening ? `voice-eq 900ms ${i * 70}ms ease-in-out infinite` : undefined,
-              }}
-            />
-          ))}
-        </span>
-      </div>
-      <Bubble show={phase >= 2}>
+    <Shell label="Voice" rootRef={ref} scroller={scroller}>
+      {phase >= 1 && (
+        <div data-phase={1} className="thread-in flex items-center gap-3">
+          <span className={`grid h-9 w-9 place-items-center rounded-full border border-line bg-ink-950 ${listening ? "ring-2 ring-white/15" : ""}`}>
+            <span className={`h-2.5 w-2.5 rounded-full bg-text ${listening ? "animate-pulse" : ""}`} />
+          </span>
+          <span className="flex h-6 items-end gap-[3px]" aria-hidden>
+            {[0.35, 0.7, 1, 0.5, 0.85, 0.4, 0.75, 0.55, 0.9].map((h, i) => (
+              <span
+                key={i}
+                className="w-[3px] origin-bottom rounded-full bg-text/85"
+                style={{
+                  height: 20,
+                  transform: `scaleY(${listening ? h : 0.35})`,
+                  animation: listening ? `voice-eq 860ms ${i * 60}ms ease-in-out infinite` : undefined,
+                }}
+              />
+            ))}
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-mute">{listening ? "Listening" : "Heard"}</span>
+        </div>
+      )}
+      <UserLine show={phase >= 2} phase={2}>
         Buy Palantir before every earnings call over the last year. What does the return look like?
-      </Bubble>
-      <div className={`min-h-0 flex-1 transition-opacity duration-500 ${phase >= 3 ? "opacity-100" : "opacity-0"}`}>
-        <LinePlot values={EQUITY} on={phase >= 3} tone="#34d399" />
-      </div>
-      <p className={`font-mono text-[10px] uppercase tracking-[0.14em] text-mute transition duration-500 ${phase >= 4 ? "opacity-100" : "opacity-0"}`}>
-        Equity · line of the book
-      </p>
-    </Tile>
+      </UserLine>
+      <Think show={phase === 3} label="Marking the prints" />
+      {phase >= 4 && (
+        <Agent show phase={4}>
+          <p>Long the session before each print, flat the session after. The line is that book.</p>
+          {phase >= 5 && (
+            <div data-phase={5} className="rounded-xl border border-line bg-ink-950/50 px-1.5 py-2">
+              <p className="mb-1 px-1 text-[10px] text-mute">Equity curve</p>
+              <Reveal on={phase >= 5}>
+                <EquityChart data={view.bars} height={156} />
+              </Reveal>
+            </div>
+          )}
+        </Agent>
+      )}
+    </Shell>
   );
 }
 
 export function ProductGrid() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [go, setGo] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setGo(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.22 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
   return (
-    <div ref={ref} className="grid grid-cols-2 gap-3 md:gap-4">
-      <ResearchTile go={go} />
-      <PaperTile go={go} />
-      <MonteTile go={go} />
-      <VoiceTile go={go} />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4">
+      <ResearchTile />
+      <PaperTile />
+      <MonteTile />
+      <VoiceTile />
     </div>
   );
 }
