@@ -96,7 +96,7 @@ export default function PortfolioPage() {
                 <Stat label="Calmar" value={n(a.calmar)} tone={a.calmar} />
                 <Stat label="Max drawdown" value={pct(a.max_drawdown)} down />
                 <Stat label="Longest drawdown" value={`${a.max_dd_days}d`} />
-                <Stat label="Volatility" value={a.volatility == null ? "—" : pct(a.volatility)} />
+                <Stat label="Volatility" value={a.volatility == null ? "\u2014" : pct(a.volatility)} />
                 <Stat label="Max gain" value={pct(a.max_gain)} tone={a.max_gain} />
                 <Stat label="Max loss" value={pct(a.max_loss)} down />
               </section>
@@ -110,7 +110,6 @@ export default function PortfolioPage() {
                   <DrawdownChart data={book.bars} height={280} />
                 </div>
               </section>
-              <p className="perf">*Past performance does not guarantee future results.</p>
             </>
           ) : (
             <p className="mt-6 text-sm text-mute">Every weight is 0. Raise one to plot the book. The strategies stay here.</p>
