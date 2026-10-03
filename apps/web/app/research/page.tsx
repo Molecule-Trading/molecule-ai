@@ -7,33 +7,176 @@ import { PageShell } from "@/components/PageShell";
 import { loadProfile, saveDeskRun, titleFromHypothesis, upsertChat, type Chat } from "@/lib/desk";
 
 type Attachment = { name: string; size: number; text: string };
-
 type SpeechRec = {
   lang: string;
   interimResults: boolean;
   maxAlternatives: number;
   start: () => void;
+  stop: () => void;
   onresult: ((ev: { results?: { 0?: { 0?: { transcript?: string } } } }) => void) | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
 };
 
+const PROMPTS = [
+  ["Moving-average crossover", "Backtest a 50/200-day moving average crossover on SPY from 2015, with costs included."],
+  ["Earnings run-up", "Buy NVDA the session before every earnings call over the last three years. What does the return look like?"],
+  ["Mean reversion", "Buy after a three-day drop and sell on the first close above the five-day average. Test it on BTC."],
+  ["Stress test", "Run a Monte Carlo on my strategy with in-sample and out-of-sample data."],
+];
+const EXAMPLES = [
+  "When headlines report a disruption to…",
+  "Buy when the 20-day return is positive and volatility is falling…",
+  "Backtest a 50/200-day crossover on SPY since 2015…",
+  "Compare my strategy with buy-and-hold, costs included…",
+  "Run a Monte Carlo on my crypto strategy…",
+];
+
 export default function ResearchPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const recRef = useRef<SpeechRec | null>(null);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [files, setFiles] = useState<Attachment[]>([]);
-  const [mounted, setMounted] = useState(false);
   const [listening, setListening] = useState(false);
+  const [ph, setPh] = useState(EXAMPLES[0]);
+  const [clock, setClock] = useState("0:00");
+  const [toast, setToast] = useState(false);
+  const [amps, setAmps] = useState<number[]>(() => Array(70).fill(0.08));
 
   useEffect(() => {
-    setMounted(true);
     const p = loadProfile();
     setName([p.firstName, p.lastName].filter(Boolean).join(" "));
   }, []);
+
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const cx = cv.getContext("2d");
+    if (!cx) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let W = 0;
+    let H = 0;
+    let mx = 0;
+    let my = 0;
+    let tx = 0;
+    let ty = 0;
+    let raf = 0;
+    const size = () => {
+      const d = Math.min(2, window.devicePixelRatio || 1);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      cv.width = W * d;
+      cv.height = H * d;
+      cx.setTransform(d, 0, 0, d, 0, 0);
+    };
+    size();
+    const lines = Array.from({ length: 11 }, (_, i) => ({
+      f1: 0.0015 + i * 0.00006,
+      f2: 0.0038 - i * 0.00009,
+      p1: i * 1.7,
+      p2: i * 2.3,
+      a: 16 + i * 6.5,
+      s1: 0.00016 + i * 0.00002,
+      s2: 0.0003 - i * 0.00001,
+    }));
+    const onMove = (e: PointerEvent) => {
+      tx = (e.clientX / W - 0.5) * 14;
+      ty = (e.clientY / H - 0.5) * 10;
+    };
+    const draw = (t: number) => {
+      cx.clearRect(0, 0, W, H);
+      mx += (tx - mx) * 0.05;
+      my += (ty - my) * 0.05;
+      lines.forEach((l, i) => {
+        cx.beginPath();
+        const o = mx * (i + 1) * 0.8;
+        for (let x = -160; x <= W + 160; x += 8) {
+          const y = H * (0.5 + i * 0.045) + Math.sin(x * l.f1 + t * l.s1 + l.p1) * l.a + Math.sin(x * l.f2 - t * l.s2 + l.p2) * l.a * 0.5 + my * (i + 1) * 0.8;
+          if (x === -160) cx.moveTo(x + o, y);
+          else cx.lineTo(x + o, y);
+        }
+        cx.strokeStyle = i === 7 ? "rgba(61,220,151,.26)" : `rgba(165,185,225,${0.05 + i * 0.011})`;
+        cx.lineWidth = i === 7 ? 1.2 : 1;
+        cx.stroke();
+      });
+      if (!reduce) raf = requestAnimationFrame(draw);
+    };
+    window.addEventListener("resize", size);
+    window.addEventListener("pointermove", onMove);
+    raf = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", size);
+      window.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (text) return;
+    let ei = 0;
+    let ci = 0;
+    let del = false;
+    let timer = 0;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tick = () => {
+      if (reduce) return;
+      const x = EXAMPLES[ei];
+      setPh(x.slice(0, ci));
+      if (!del) {
+        if (ci < x.length) {
+          ci += 1;
+          timer = window.setTimeout(tick, 40);
+        } else {
+          del = true;
+          timer = window.setTimeout(tick, 2000);
+        }
+      } else if (ci > 0) {
+        ci = Math.max(0, ci - 2);
+        timer = window.setTimeout(tick, 16);
+      } else {
+        del = false;
+        ei = (ei + 1) % EXAMPLES.length;
+        timer = window.setTimeout(tick, 380);
+      }
+    };
+    timer = window.setTimeout(tick, 400);
+    return () => window.clearTimeout(timer);
+  }, [text]);
+
+  useEffect(() => {
+    if (!listening) return;
+    const t0 = performance.now();
+    const id = window.setInterval(() => {
+      const s = Math.floor((performance.now() - t0) / 1000);
+      setClock(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+    }, 250);
+    let raf = 0;
+    let last = 0;
+    const bars = Array(70).fill(0.08);
+    const wave = (now: number) => {
+      if (now - last > 75) {
+        last = now;
+        const sec = (now - t0) / 1000;
+        const env = 0.35 + 0.65 * Math.abs(Math.sin(sec * 1.9) * Math.sin(sec * 0.7 + 1));
+        const talk = Math.sin(sec * 0.9) > -0.3;
+        const v = talk ? Math.min(1, 0.12 + env * (0.35 + Math.random() * 0.65)) : 0.06 + Math.random() * 0.05;
+        bars.push(v);
+        bars.shift();
+        setAmps([...bars]);
+      }
+      raf = requestAnimationFrame(wave);
+    };
+    raf = requestAnimationFrame(wave);
+    return () => {
+      window.clearInterval(id);
+      cancelAnimationFrame(raf);
+    };
+  }, [listening]);
 
   const greeting = useMemo(() => {
     const first = name.trim().split(" ")[0];
@@ -43,24 +186,25 @@ export default function ResearchPage() {
   async function onFiles(list: FileList | null) {
     if (!list?.length) return;
     const next: Attachment[] = [];
-    for (const file of Array.from(list)) {
-      next.push({ name: file.name, size: file.size, text: await readFile(file) });
-    }
+    for (const file of Array.from(list)) next.push({ name: file.name, size: file.size, text: await readFile(file) });
     setFiles((prev) => [...prev, ...next].slice(0, 4));
     if (fileRef.current) fileRef.current.value = "";
   }
 
   function dictate() {
-    const w = window as unknown as {
-      SpeechRecognition?: new () => SpeechRec;
-      webkitSpeechRecognition?: new () => SpeechRec;
-    };
+    if (listening) {
+      recRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const w = window as unknown as { SpeechRecognition?: new () => SpeechRec; webkitSpeechRecognition?: new () => SpeechRec };
     const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!Ctor) {
       setError("Voice input is not available in this browser.");
       return;
     }
     const rec = new Ctor();
+    recRef.current = rec;
     rec.lang = "en-US";
     rec.interimResults = false;
     rec.maxAlternatives = 1;
@@ -77,7 +221,7 @@ export default function ResearchPage() {
 
   async function submit() {
     const hypothesis = text.trim();
-    if (hypothesis.length < 8) return;
+    if (hypothesis.length < 8 || busy) return;
     setBusy(true);
     setError(null);
     const note = files.length ? `\n\nAttached: ${files.map((f) => f.name).join(", ")}` : "";
@@ -92,12 +236,10 @@ export default function ResearchPage() {
     };
     upsertChat(chat);
     try {
-      const run = await api<Run>("/research", {
-        method: "POST",
-        body: JSON.stringify({ hypothesis, attachment: attachment || undefined }),
-      });
+      const run = await api<Run>("/research", { method: "POST", body: JSON.stringify({ hypothesis, attachment: attachment || undefined }) });
       saveDeskRun(run);
       upsertChat({ ...chat, runId: run.id });
+      setToast(true);
       router.push(`/runs/${run.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Research failed");
@@ -108,83 +250,80 @@ export default function ResearchPage() {
 
   return (
     <PageShell center>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center py-8">
-        <h1 className="font-serif text-4xl font-medium tracking-tight md:text-5xl">
-          {mounted ? greeting : "Let’s start building"}
-        </h1>
-        <p className="mt-3 text-sm text-mute">Build, backtest, or explore a new trading idea.</p>
-        <div className="mt-8 rounded-2xl border border-line bg-ink-900 p-3">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) submit();
-            }}
-            rows={3}
-            placeholder="When headlines report a disruption to…"
-            className="w-full resize-none bg-transparent px-2 py-2 text-sm text-text outline-none placeholder:text-mute"
-          />
-          {files.length > 0 && (
-            <div className="flex flex-wrap gap-2 px-1 pb-1">
-              {files.map((f) => (
-                <button
-                  key={f.name}
-                  type="button"
-                  onClick={() => setFiles((prev) => prev.filter((x) => x.name !== f.name))}
-                  className="rounded-full border border-line px-2.5 py-1 text-[11px] text-mute hover:text-text"
-                >
-                  {f.name} ×
-                </button>
+      <div className={`desk-research ${listening ? "listening" : ""} ${text ? "has" : ""}`}>
+        <canvas ref={canvasRef} className="bg" aria-hidden />
+        <div className="dots" aria-hidden />
+        <div className="glow" aria-hidden />
+        <main>
+          <div className="hero">
+            <h1 className="up" style={{ ["--i" as string]: 0 }}>{greeting}</h1>
+            <p className="sub up" style={{ ["--i" as string]: 1 }}>Build, backtest, or explore a new trading idea.</p>
+            <form
+              className="box up"
+              style={{ ["--i" as string]: 2 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submit();
+              }}
+            >
+              <div className="files">
+                {files.map((f) => (
+                  <span key={f.name} className="file">
+                    {f.name}
+                    <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((prev) => prev.filter((x) => x.name !== f.name))}>×</button>
+                  </span>
+                ))}
+              </div>
+              <div className="ta">
+                <textarea
+                  value={text}
+                  rows={2}
+                  aria-label="Describe a trading idea"
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void submit();
+                    }
+                  }}
+                />
+                {!text && <span className="ph">{ph}</span>}
+                <div className="vp" aria-hidden={!listening}>
+                  <span className="lb"><i /><b>Listening</b><em>{clock}</em></span>
+                  <span className="wf">
+                    {amps.map((v, i) => <s key={i} style={{ transform: `scaleY(${v})` }} />)}
+                  </span>
+                </div>
+              </div>
+              <div className="row">
+                <div className="l">
+                  <button type="button" className="pill" onClick={() => fileRef.current?.click()}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" /></svg>
+                    Attach
+                  </button>
+                  <input ref={fileRef} type="file" multiple hidden accept=".txt,.md,.csv,.json,.pdf,.tex" onChange={(e) => void onFiles(e.target.files)} />
+                </div>
+                <div className="r">
+                  <span className="model">molecule 1.0</span>
+                  <button type="button" className="mic" aria-label={listening ? "Stop voice input" : "Voice input"} aria-pressed={listening} onClick={dictate}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="12" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v4" /></svg>
+                    <span className="eq"><s /><s /><s /><s /></span>
+                  </button>
+                  <button className="send" type="submit" disabled={busy || text.trim().length < 8} aria-label="Send">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+                  </button>
+                </div>
+              </div>
+              {error && <p className="err">{error}</p>}
+            </form>
+            <div className="chips up" style={{ ["--i" as string]: 3 }}>
+              {PROMPTS.map(([label, prompt]) => (
+                <button key={label} type="button" className="chip" onClick={() => setText(prompt)}>{label}</button>
               ))}
             </div>
-          )}
-          <div className="mt-2 flex items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-ink-950 px-3 text-xs text-mute hover:text-text"
-              >
-                <Paperclip />
-                Attach
-              </button>
-              <button
-                type="button"
-                onClick={dictate}
-                className={`inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs ${
-                  listening
-                    ? "border-red-400 text-red-300"
-                    : "border-line bg-ink-950 text-mute hover:text-text"
-                }`}
-                aria-pressed={listening}
-              >
-                <Mic />
-                {listening ? "Listening" : "Voice"}
-              </button>
-            </div>
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              accept=".txt,.md,.csv,.json,.pdf,.tex"
-              className="hidden"
-              onChange={(e) => void onFiles(e.target.files)}
-            />
-            <div className="flex items-center gap-3">
-              <span className="rounded-md border border-line px-2 py-1 text-xs text-mute">molecule 1.0</span>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={busy || text.trim().length < 8}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-text text-ink-950 disabled:opacity-40"
-                aria-label="Run research"
-              >
-                {busy ? "…" : "↑"}
-              </button>
-            </div>
           </div>
-          {error && <div className="px-2 pt-2 text-sm text-red-400">{error}</div>}
-        </div>
+        </main>
+        <div className={`toast ${toast ? "on" : ""}`}>Sent. The desk is on it.</div>
       </div>
     </PageShell>
   );
@@ -196,27 +335,4 @@ async function readFile(file: File) {
   const chunks = raw.replace(/[^\t\n\r\x20-\x7e]/g, " ").match(/[A-Za-z][A-Za-z0-9 ,.:;'"()%+\-]{40,}/g) || [];
   const text = chunks.join("\n").slice(0, 120000);
   return text.length > 200 ? text : `[Could not read text out of ${file.name}. Paste the method into the chat.]`;
-}
-
-function Paperclip() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M8.5 12.5l6.2-6.2a3 3 0 114.2 4.2l-7.6 7.6a4.5 4.5 0 11-6.4-6.4l7.1-7.1"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function Mic() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="9" y="3" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M6 11a6 6 0 0012 0M12 17v4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
 }

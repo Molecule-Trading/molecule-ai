@@ -50,7 +50,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div id="product" className="mx-auto mt-14 w-full max-w-6xl scroll-mt-20 px-5 pb-10 md:mt-20 md:px-8 md:pb-16">
+          <div id="product" className="mx-auto mt-14 w-full max-w-6xl scroll-mt-20 px-5 pb-24 md:mt-20 md:px-8">
             <Showcase />
           </div>
         </section>

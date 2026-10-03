@@ -180,7 +180,6 @@ export function Showcase() {
 
 function mountShowcase(root: HTMLElement) {
   let stop = false;
-  let visible = false;
   const timers = new Set<number>();
   const sleep = (ms: number) =>
     new Promise<void>((resolve) => {
@@ -637,25 +636,16 @@ function mountShowcase(root: HTMLElement) {
     return () => root.removeEventListener("click", onClick);
   }
 
-  const io = new IntersectionObserver(
-    ([entry]) => {
-      visible = !!entry?.isIntersecting;
-    },
-    { threshold: 0.18, rootMargin: "80px 0px" },
-  );
-  io.observe(root);
-
   async function run(card: HTMLElement, delay: number) {
     await sleep(delay);
     const els = [...card.querySelectorAll<HTMLElement>("[data-s]")].sort((a, b) => +(a.dataset.s || 0) - +(b.dataset.s || 0));
     while (!stop) {
-      while (!visible && !stop) await sleep(160);
       if (stop) return;
       reset(card);
       for (const e of els) {
-        if (stop || !visible) break;
+        if (stop) break;
         await sleep(+(e.dataset.w || 280));
-        if (stop || !visible) break;
+        if (stop) break;
         await go(e, card);
       }
       await sleep(4200);
@@ -665,7 +655,6 @@ function mountShowcase(root: HTMLElement) {
 
   return () => {
     stop = true;
-    io.disconnect();
     timers.forEach((id) => window.clearTimeout(id));
     root.removeEventListener("click", onClick);
   };
